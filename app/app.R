@@ -1,5 +1,5 @@
 options(repos = c(
-  malamodel = "https://medewitt.github.io/malaria-simulator/bin/emscripten/contrib/4.3",
+  mrcide = "https://mrc-ide.r-universe.dev",
   CRAN = "https://repo.r-wasm.org"
 ))
 

@@ -37,7 +37,7 @@ jobs:
       - name: Render Quarto Website
         run: |
           # Set repos in .Rprofile so they are used by shinylive::export during render
-          echo 'options(repos = c(mrcide = "https://mrc-ide.r-universe.dev", malamodel = "https://medewitt.github.io/malaria-simulator/bin/emscripten/contrib/4.3", CRAN = "https://repo.r-wasm.org"))' > .Rprofile
+          echo 'options(repos = c(mrcide = "https://mrc-ide.r-universe.dev", CRAN = "https://repo.r-wasm.org"))' > .Rprofile
           quarto render
 
       - name: Upload Pages artifact
