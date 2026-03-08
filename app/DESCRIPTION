@@ -1,0 +1,15 @@
+Package: malaria-control-lecture
+Title: Malaria Control Strategy Lab
+Version: 0.1.0
+Author: Michael
+Description: A Shiny app for exploring malaria control strategies.
+Depends:
+    R (>= 4.0.0)
+Imports:
+    shiny,
+    bslib,
+    malariasimulation,
+    ggplot2
+License: MIT
+Encoding: UTF-8
+LazyData: true

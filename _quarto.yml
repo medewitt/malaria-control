@@ -1,0 +1,17 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Malaria Control Strategy Lab"
+  navbar:
+    left:
+      - text: "Simulation Lab"
+        href: index.qmd
+      - text: "Lecture Presentation"
+        href: presentation/overview.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true

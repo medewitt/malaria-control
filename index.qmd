@@ -1,0 +1,35 @@
+---
+title: "Malaria Control Strategy Lab"
+filters:
+  - shinylive
+format:
+  html:
+    grid:
+      body-width: 1200px
+---
+
+This lab allows you to explore different malaria control strategies given a fixed budget. Adjust the sliders to see the impact on malaria prevalence in children aged 2-10 ($PfPR_{2-10}$) and the associated costs.
+
+::: {.panel-tabset}
+
+## Simulation Lab
+
+```{shinylive-r}
+#| standalone: true
+#| viewerHeight: 800
+#| file: app/app.R
+```
+
+## Presentation
+
+You can view the lecture presentation here: [Lecture Presentation](presentation/overview.qmd).
+
+:::
+
+### Lab Instructions
+
+1. **Phase 1:** Try to get $PfPR$ below 5% with **unlimited** budget.
+2. **Phase 2:** Apply the $50,000 constraint.
+3. **Phase 3:** Present your "Optimal Mix" to the class.
+
+> **Note:** If your budget bar turns red, your strategy is disqualified!
