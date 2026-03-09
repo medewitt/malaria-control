@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MalariaLab — Disease Dynamics Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f3f0e9;
+  --surface2: #CFD2D3;
+  --border: rgba(140,109,44,0.25);
+  --accent: #8C6D2C;
+  --accent2: #624d17;
+  --accent3: #002B49;
+  --accent4: #F0C300;
+  --text: #000000;
+  --text-dim: #54565A;
+  --text-bright: #000000;
+  --red: #E5353C;
+  --blue: #004A98;
+  --green: #00BC70;
+  --yellow: #F0C300;
+  --purple: #002B49;
+  --orange: #FF7F31;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+
+.container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+/* HEADER */
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  background: #000000;
+  backdrop-filter: blur(12px);
+  z-index: 100;
+  color: #ffffff;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 36px; height: 36px;
+  background: #8C6D2C;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #ffffff;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.5px;
+}
+
+.logo-text span { color: #8C6D2C; }
+
+.header-meta {
+  font-family: monospace;
+  font-size: 11px;
+  color: #ffffff;
+  text-align: right;
+}
+
+/* HERO */
+.hero {
+  padding: 48px 0 32px;
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: clamp(28px, 5vw, 52px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: #54565A;
+  margin-bottom: 16px;
+  font-family: Garamond, serif;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: #8C6D2C;
+}
+
+.hero p {
+  font-size: 16px;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin: 0 auto 32px;
+  line-height: 1.6;
+}
+
+/* BUDGET BAR */
+.budget-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 28px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.budget-label {
+  font-family: monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #54565A;
+  white-space: nowrap;
+}
+
+.budget-amount {
+  font-size: 28px;
+  font-weight: 800;
+  color: #8C6D2C;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.budget-track {
+  flex: 1;
+  min-width: 200px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.budget-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8C6D2C, #624d17);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.budget-spent {
+  font-family: monospace;
+  font-size: 13px;
+  color: #54565A;
+  white-space: nowrap;
+}
+
+.budget-spent span { color: #E5353C; font-weight: 700; }
+
+/* MAIN GRID */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 1100px) { .main-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 700px) { .main-grid { grid-template-columns: 1fr; } }
+
+/* TEAM CARDS */
+.team-card {
+  background: #f3f0e9;
+  border: 1px solid rgba(140,109,44,0.25);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.team-card:hover { transform: translateY(-2px); }
+
+.team-card.team-vector { border-top: 3px solid #004A98; }
+.team-card.team-vector:hover { border-color: #004A98; }
+.team-card.team-vaccine { border-top: 3px solid #002B49; }
+.team-card.team-vaccine:hover { border-color: #002B49; }
+.team-card.team-clinical { border-top: 3px solid #FF7F31; }
+.team-card.team-clinical:hover { border-color: #FF7F31; }
+
+.team-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.team-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.team-vector .team-icon { background: rgba(0,74,152,0.15); }
+.team-vaccine .team-icon { background: rgba(0,43,73,0.15); }
+.team-clinical .team-icon { background: rgba(255,127,49,0.15); }
+
+.team-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  font-family: Garamond, serif;
+}
+
+.team-subtitle {
+  font-size: 11px;
+  color: #54565A;
+  font-family: monospace;
+}
+
+.team-cost {
+  margin-left: auto;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #CFD2D3;
+  color: #8C6D2C;
+}
+
+.team-body { padding: 16px 20px; }
+
+/* SLIDERS */
+.param-group { margin-bottom: 14px; }
+
+.param-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.param-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.param-name .param-info {
+  font-size: 10px;
+  color: #54565A;
+  font-family: monospace;
+  font-weight: 400;
+  display: block;
+}
+
+.param-value {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #CFD2D3;
+  min-width: 60px;
+  text-align: right;
+}
+
+.team-vector .param-value { color: #004A98; }
+.team-vaccine .param-value { color: #002B49; }
+.team-clinical .param-value { color: #FF7F31; }
+
+.param-cost-tag {
+  font-family: monospace;
+  font-size: 9px;
+  color: #54565A;
+  margin-bottom: 4px;
+}
+
+input[type="range"] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(140,109,44,0.25);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #8C6D2C;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  transition: transform 0.15s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.team-vector input[type="range"]::-webkit-slider-thumb { background: #004A98; }
+.team-vaccine input[type="range"]::-webkit-slider-thumb { background: #002B49; }
+.team-clinical input[type="range"]::-webkit-slider-thumb { background: #FF7F31; }
+
+/* EPIDEMIOLOGY PARAMS */
+.epi-card {
+  background: #f3f0e9;
+  border: 1px solid rgba(140,109,44,0.25);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.epi-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.epi-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #000000;
+  font-family: Garamond, serif;
+}
+
+.epi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0;
+}
+
+.epi-param {
+  padding: 14px 20px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.epi-param:last-child { border-right: none; }
+
+/* CHART AREA */
+.chart-section {
+  background: #f3f0e9;
+  border: 1px solid rgba(140,109,44,0.25);
+  border-radius: 16px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.chart-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: gap;
+  gap: 12px;
+}
+
+.chart-title { font-size: 15px; font-weight: 700; color: #000000; font-family: Garamond, serif; }
+
+.chart-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.chart-tab {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(140,109,44,0.25);
+  background: transparent;
+  color: #54565A;
+  font-family: monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.chart-tab.active {
+  background: #8C6D2C;
+  border-color: #8C6D2C;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 10px;
+  color: #54565A;
+}
+
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 320px;
+}
+
+/* METRICS */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: #f3f0e9;
+  border: 1px solid rgba(140,109,44,0.25);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.metric-label {
+  font-family: monospace;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #54565A;
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+  color: #000000;
+}
+
+.metric-sub {
+  font-size: 11px;
+  color: #54565A;
+  font-family: monospace;
+}
+
+/* RUN BUTTON */
+.run-btn {
+  display: block;
+  width: 100%;
+  padding: 18px;
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 24px;
+}
+
+.run-btn:hover { background: #8C6D2C; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(140,109,44,0.3); }
+.run-btn:active { transform: translateY(0); }
+.run-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* EQUATION BOX */
+.equation-box {
+  background: #f3f0e9;
+  border: 1px solid rgba(140,109,44,0.25);
+  border-left: 3px solid #8C6D2C;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 2;
+  color: #54565A;
+}
+
+.equation-box h3 {
+  font-family: Garamond, serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 12px;
+}
+
+.eq { color: #8C6D2C; }
+.eq-comment { color: #54565A; font-style: italic; }
+
+/* MOSQ CHART */
+.two-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 800px) { .two-charts { grid-template-columns: 1fr; } }
+
+/* STATUS BADGE */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-badge.running {
+  background: rgba(140,109,44,0.1);
+  color: #000000;
+  border: 1px solid rgba(140,109,44,0.3);
+}
+
+.status-badge.ready {
+  background: rgba(84,86,90,0.05);
+  color: #54565A;
+  border: 1px solid rgba(84,86,90,0.2);
+}
+
+.pulse {
+  width: 6px; height: 6px;
+  background: #8C6D2C;
+  border-radius: 50%;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* TOOLTIP */
+.tooltip-wrap { position: relative; display: inline-block; }
+.tooltip-icon {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: var(--text-dim);
+  cursor: help;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.footer-info {
+  text-align: center;
+  padding: 32px 0;
+  color: var(--text-dim);
+  font-family: monospace;
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">🦟</div>
+        <div class="logo-text">Malaria<span>Lab</span></div>
+      </div>
+      <div class="header-meta">
+        Continuous ODE Malaria Simulator<br>
+        Based on Griffin et al. (2010)
+      </div>
+      <div id="statusBadge" class="status-badge ready">
+        <div style="width:6px;height:6px;background:var(--text-dim);border-radius:50%;"></div>
+        READY
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>Control the <em>Epidemic</em>.<br>Work within your <em>Budget</em>.</h1>
+    <p>Each team controls a different set of public health interventions. Adjust parameters, spend wisely, and observe the disease dynamics. Can you reduce malaria burden?</p>
+  </div>
+
+  <!-- BUDGET -->
+  <div class="budget-bar">
+    <div>
+      <div class="budget-label">Total Budget</div>
+      <div class="budget-amount">$<span id="totalBudget">25,000</span></div>
+    </div>
+    <div class="budget-track">
+      <div class="budget-fill" id="budgetFill" style="width:0%"></div>
+    </div>
+    <div class="budget-spent">Spent: <span id="spentAmount">$0</span> &nbsp;|&nbsp; Remaining: <span id="remainingAmount" style="color:var(--accent)">$25,000</span></div>
+    <div style="margin-left:auto;">
+      <label style="font-size:12px;color:var(--text-dim);font-family:'Space Mono',monospace;">Population Size</label><br>
+      <select id="popSize" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-family:'Space Mono',monospace;font-size:12px;margin-top:4px;">
+        <option value="1000">1,000</option>
+        <option value="5000" selected>5,000</option>
+        <option value="10000">10,000</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TEAM CARDS -->
+  <div class="main-grid">
+
+    <!-- TEAM 1: VECTOR CONTROL -->
+    <div class="team-card team-vector">
+      <div class="team-header">
+        <div class="team-icon">🛏️</div>
+        <div>
+          <div class="team-title">Team Vector Control</div>
+          <div class="team-subtitle">Bednets & Indoor Spraying</div>
+        </div>
+        <div class="team-cost" id="vectorCost">$0</div>
+      </div>
+      <div class="team-body">
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">Bednet Coverage
+              <span class="param-info">Reduces mosquito biting rate</span>
+            </div>
+            <div class="param-value" id="bednetsVal">0%</div>
+          </div>
+          <div class="param-cost-tag">💰 $5 per net · ~1 net/person</div>
+          <input type="range" id="bednets" min="0" max="1" step="0.01" value="0" oninput="updateParams()">
+        </div>
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">IRS Coverage
+              <span class="param-info">Indoor Residual Spraying — kills resting mosquitoes</span>
+            </div>
+            <div class="param-value" id="irsVal">0%</div>
+          </div>
+          <div class="param-cost-tag">💰 $8 per household · ~4 persons/household</div>
+          <input type="range" id="irs" min="0" max="1" step="0.01" value="0" oninput="updateParams()">
+        </div>
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">Bednet Efficacy
+              <span class="param-info">% biting reduction per net (quality)</span>
+            </div>
+            <div class="param-value" id="netEfficacyVal">70%</div>
+          </div>
+          <div class="param-cost-tag">💰 +$3/net for long-lasting insecticidal nets</div>
+          <input type="range" id="netEfficacy" min="0.3" max="0.95" step="0.01" value="0.7" oninput="updateParams()">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TEAM 2: VACCINES -->
+    <div class="team-card team-vaccine">
+      <div class="team-header">
+        <div class="team-icon">💉</div>
+        <div>
+          <div class="team-title">Team Vaccines & Chemoprevention</div>
+          <div class="team-subtitle">RTS,S Vaccination & SMC</div>
+        </div>
+        <div class="team-cost" id="vaccineCost">$0</div>
+      </div>
+      <div class="team-body">
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">R21/Matrix M or RTS,S Vaccination Coverage
+              <span class="param-info">Pre-erythrocytic vaccine, children under 5</span>
+            </div>
+            <div class="param-value" id="vaccineVal">0%</div>
+          </div>
+          <div class="param-cost-tag">💰 $5.0 average per dose · 4 doses required</div>
+          <input type="range" id="vaccine" min="0" max="1" step="0.01" value="0" oninput="updateParams()">
+        </div>
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">SMC Coverage
+              <span class="param-info">Seasonal Malaria Chemoprevention (children)</span>
+            </div>
+            <div class="param-value" id="smcVal">0%</div>
+          </div>
+          <div class="param-cost-tag">💰 $3.50 per child per season · 3 rounds</div>
+          <input type="range" id="smc" min="0" max="1" step="0.01" value="0" oninput="updateParams()">
+        </div>
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">Vaccine Efficacy (%)
+              <span class="param-info">Protection from clinical disease</span>
+            </div>
+            <div class="param-value" id="vaccEfficacyVal">39%</div>
+          </div>
+          <div class="param-cost-tag">Fixed by biology — RTS,S field efficacy</div>
+          <input type="range" id="vaccEfficacy" min="0.1" max="0.9" step="0.01" value="0.39" oninput="updateParams()">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TEAM 3: TEST AND TREAT -->
+    <div class="team-card team-clinical">
+      <div class="team-header">
+        <div class="team-icon">🏥</div>
+        <div>
+          <div class="team-title">Team Clinical Management</div>
+          <div class="team-subtitle">Test & Treat + Prophylaxis</div>
+        </div>
+        <div class="team-cost" id="clinicalCost">$0</div>
+      </div>
+      <div class="team-body">
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">Treatment Rate (fT)
+              <span class="param-info">Prob. of receiving ACT treatment when clinical</span>
+            </div>
+            <div class="param-value" id="treatmentVal">20%</div>
+          </div>
+          <div class="param-cost-tag">💰 $2.50 per treatment course (ACT)</div>
+          <input type="range" id="treatment" min="0" max="1" step="0.01" value="0.2" oninput="updateParams()">
+        </div>
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">MDA Coverage
+              <span class="param-info">Mass Drug Administration rounds</span>
+            </div>
+            <div class="param-value" id="mdaVal">0%</div>
+          </div>
+          <div class="param-cost-tag">💰 $5 per person per round · 2 rounds/yr</div>
+          <input type="range" id="mda" min="0" max="1" step="0.01" value="0" oninput="updateParams()">
+        </div>
+
+        <div class="param-group">
+          <div class="param-row">
+            <div class="param-name">Diagnostic Capacity
+              <span class="param-info">RDT availability — increases case detection</span>
+            </div>
+            <div class="param-value" id="rdtVal">30%</div>
+          </div>
+          <div class="param-cost-tag">💰 $0.50 per RDT test</div>
+          <input type="range" id="rdt" min="0" max="1" step="0.01" value="0.3" oninput="updateParams()">
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- EPI PARAMS -->
+  <div class="epi-card">
+    <div class="epi-header">
+      <span style="font-size:16px;">⚙️</span>
+      <span class="epi-title">Epidemiological Parameters</span>
+      <span style="font-size:12px;color:var(--text-dim);margin-left:8px;font-family:'Space Mono',monospace;">— adjust to explore different transmission settings</span>
+    </div>
+    <div class="epi-grid">
+      <div class="epi-param">
+        <div class="param-row">
+          <div class="param-name">EIR (inoculations/person/yr)
+            <span class="param-info">Entomological Inoculation Rate</span>
+          </div>
+          <div class="param-value" id="eirVal" style="color:var(--accent)">50</div>
+        </div>
+        <input type="range" id="eir" min="1" max="500" step="1" value="50" oninput="updateParams()" style="--thumb: var(--accent)">
+      </div>
+      <div class="epi-param">
+        <div class="param-row">
+          <div class="param-name">Seasonality
+            <span class="param-info">0=stable, 1=highly seasonal</span>
+          </div>
+          <div class="param-value" id="seasonalVal" style="color:var(--accent)">0.3</div>
+        </div>
+        <input type="range" id="seasonal" min="0" max="1" step="0.01" value="0.3" oninput="updateParams()">
+      </div>
+      <div class="epi-param">
+        <div class="param-row">
+          <div class="param-name">Simulation Years
+            <span class="param-info">Duration of simulation</span>
+          </div>
+          <div class="param-value" id="yearsVal" style="color:var(--accent)">5 yr</div>
+        </div>
+        <input type="range" id="years" min="1" max="15" step="1" value="5" oninput="updateParams()">
+      </div>
+      <div class="epi-param">
+        <div class="param-row">
+          <div class="param-name">Mosquito Lifespan (days)
+            <span class="param-info">Mean adult mosquito survival</span>
+          </div>
+          <div class="param-value" id="mosqLifeVal" style="color:var(--accent)">7.6</div>
+        </div>
+        <input type="range" id="mosqLife" min="3" max="20" step="0.1" value="7.6" oninput="updateParams()">
+      </div>
+      <div class="epi-param">
+        <div class="param-row">
+          <div class="param-name">Stochasticity
+            <span class="param-info">0=deterministic ODE · 1=full demographic noise</span>
+          </div>
+          <div class="param-value" id="noiseVal" style="color:var(--accent)">0.5</div>
+        </div>
+        <input type="range" id="noiseScale" min="0" max="1" step="0.05" value="0.5" oninput="document.getElementById('noiseVal').textContent=parseFloat(this.value).toFixed(2)">
+      </div>
+    </div>
+  </div>
+
+  <!-- RUN BUTTON -->
+  <button class="run-btn" id="runBtn" onclick="runSimulation()">▶ Run Simulation</button>
+
+  <!-- METRICS -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">PfPR 2-10</div>
+      <div class="metric-value" id="mPfPR" style="color:var(--red)">—</div>
+      <div class="metric-sub">Parasite prevalence (children)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Peak Infections / 1000</div>
+      <div class="metric-value" id="mPeak" style="color:var(--orange)">—</div>
+      <div class="metric-sub">Highest single-day burden</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total Clinical Cases</div>
+      <div class="metric-value" id="mCases" style="color:var(--yellow)">—</div>
+      <div class="metric-sub">Cumulative over simulation</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cases Averted</div>
+      <div class="metric-value" id="mAverted" style="color:var(--green)">—</div>
+      <div class="metric-sub">vs. no-intervention baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cost per Case Averted</div>
+      <div class="metric-value" id="mCostEffective" style="color:var(--accent)">—</div>
+      <div class="metric-sub">Intervention efficiency</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Equilibrium EIR</div>
+      <div class="metric-value" id="mEIR" style="color:var(--blue)">—</div>
+      <div class="metric-sub">Final transmission intensity</div>
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="chart-section">
+    <div class="chart-header">
+      <div class="chart-title" id="chartTitle">PfPR₂₋₁₀: Intervention vs Control</div>
+      <div class="chart-tabs">
+        <button class="chart-tab active" onclick="switchChart('pfpr', this)">PfPR₂₋₁₀</button>
+        <button class="chart-tab" onclick="switchChart('human', this)">Human States</button>
+        <button class="chart-tab" onclick="switchChart('mosquito', this)">Mosquito Population</button>
+        <button class="chart-tab" onclick="switchChart('eir', this)">EIR / FOIM</button>
+        <button class="chart-tab" onclick="switchChart('immunity', this)">Immunity</button>
+      </div>
+    </div>
+    <div class="chart-legend" id="chartLegend">
+      <div class="legend-item"><div class="legend-dot" style="background:#8C6D2C"></div>PfPR — Intervention arm</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E5353C"></div>PfPR — Control arm (no intervention)</div>
+    </div>
+    <canvas id="mainChart"></canvas>
+  </div>
+
+  <!-- EQUATION BOX -->
+  <div class="equation-box">
+    <h3>📐 Model Equations — Griffin et al. (2010) with demographic stochasticity</h3>
+    <div><span class="eq">dS/dt</span> &nbsp;= μN + rT·Tr + rU·U − Λ·S − μ·S &nbsp;<span class="eq-comment">// births + recoveries, minus new infections</span></div>
+    <div><span class="eq">dD/dt</span> &nbsp;= φ(ICA)·(1−fT)·Λ·(S+A+U) − (rD+μ)·D</div>
+    <div><span class="eq">dA/dt</span> &nbsp;= (1−φ)·Λ·(S+U) + rD·D − φ·Λ·A − (rA+μ)·A &nbsp;<span class="eq-comment">// superinfection A→D</span></div>
+    <div><span class="eq">dU/dt</span> &nbsp;= rA·A − Λ·U − (rU+μ)·U &nbsp;<span class="eq-comment">// all U bites exit U → D or A</span></div>
+    <div style="margin-top:6px"><span class="eq">b(IB)</span> &nbsp;= b₀·[b₁ + (1−b₁)/(1+(IB/IB₀)^kB)] &nbsp;<span class="eq-comment">// Griffin 2010: saturating blood immunity</span></div>
+    <div><span class="eq">φ(ICA)</span> = φ₀·[1 − ICA^kCA/(ICA^kCA + IC₅₀^kCA)] &nbsp;<span class="eq-comment">// clinical immunity, ICA₅₀=8, never reaches zero</span></div>
+    <div><span class="eq">dIB/dt</span> = EIR(t)/dB − IB/dB &nbsp;&nbsp;<span class="eq-comment">// builds with bites (dB≈142d), mean-reverts</span></div>
+    <div><span class="eq">dICA/dt</span>= incidence/(N·dCA) − ICA/dCA &nbsp;<span class="eq-comment">// builds with clinical exposure (dCA≈662d)</span></div>
+    <div style="margin-top:6px"><span class="eq">SDE noise:</span> du = f(u)dt + σ(u)·√dt·dW &nbsp;<span class="eq-comment">// Euler-Maruyama; σ²=Σ|flux rates| (demographic stochasticity)</span></div>
+  </div>
+
+  <div class="footer-info">
+    MalariaLab · Continuous ODE model based on Griffin et al. (2010) PLOS Medicine &amp; malariasimulation framework<br>
+    Built for undergraduate public health education · Not for clinical use
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// SOLVERS
+// ============================================================
+
+// Standard RK4 — used for deterministic spin-up only
+function rk4(f, y0, t0, t1, dt) {
+  const steps = Math.floor((t1 - t0) / dt);
+  const results = [{ t: t0, y: [...y0] }];
+  let y = [...y0];
+  let t = t0;
+  for (let i = 0; i < steps; i++) {
+    const k1 = f(t, y);
+    const k2 = f(t + dt/2, y.map((yi, j) => yi + dt/2 * k1[j]));
+    const k3 = f(t + dt/2, y.map((yi, j) => yi + dt/2 * k2[j]));
+    const k4 = f(t + dt,   y.map((yi, j) => yi + dt   * k3[j]));
+    y = y.map((yi, j) => Math.max(0, yi + (dt/6)*(k1[j]+2*k2[j]+2*k3[j]+k4[j])));
+    t += dt;
+    if (i % 5 === 0) results.push({ t, y: [...y] });
+  }
+  return results;
+}
+
+// Euler-Maruyama SDE solver
+// The diffusion (noise) term uses the demographic-stochasticity
+// approximation: for a Poisson flow with rate F, noise ~ sqrt(F·dt)·N(0,1)
+// This captures the random fluctuations of a finite population without
+// running a full individual-based simulation.
+//
+// noiseScale=0 → pure ODE;  noiseScale=1 → full demographic stochasticity
+function eulerMaruyama(driftFn, noiseFn, y0, t0, t1, dt, noiseScale) {
+  const steps = Math.floor((t1 - t0) / dt);
+  const results = [{ t: t0, y: [...y0] }];
+  let y = [...y0];
+  let t = t0;
+  const sqdt = Math.sqrt(dt);
+  for (let i = 0; i < steps; i++) {
+    const drift = driftFn(t, y);
+    const noise = noiseScale > 0 ? noiseFn(t, y) : null;
+    y = y.map((yi, j) => {
+      let v = yi + drift[j] * dt;
+      if (noise) v += noiseScale * noise[j] * sqdt * randN();
+      return Math.max(0, v);
+    });
+    t += dt;
+    if (i % 5 === 0) results.push({ t, y: [...y] });
+  }
+  return results;
+}
+
+// Box-Muller standard normal sample
+let _spare = null, _spareReady = false;
+function randN() {
+  if (_spareReady) { _spareReady = false; return _spare; }
+  const u = 1 - Math.random(), v = Math.random();
+  const mag = Math.sqrt(-2 * Math.log(u));
+  _spare = mag * Math.cos(2 * Math.PI * v);
+  _spareReady = true;
+  return mag * Math.sin(2 * Math.PI * v);
+}
+
+// ============================================================
+// MALARIA ODE/SDE MODEL
+// ============================================================
+
+function malariaODE(params) {
+  const {
+    N,           // total human population
+    EIR_base,    // annual EIR (inoculations/person/year)
+    fT,          // prob of treatment
+    // phi NOT fixed — computed from immunity-modified clinical probability
+    rD, rA, rU, rT,
+    mu,
+    muM, rP, rEM,
+    muE0, muL0, muP, gamma, K0,
+    seasonal,
+    bednets, netEfficacy, irs,
+    vaccine, vaccEfficacy, smc,
+    mda, rdt_factor
+  } = params;
+
+  const EIR_daily = EIR_base / 365.0;
+
+  // ── Griffin 2010 immunity-to-clinical-probability function ─────────────────
+  // phi(ICA) = phi0 * (1 - (ICA^kCA)/(ICA^kCA + IC50^kCA))
+  // At ICA=0: phi=phi0=0.787 (naive, no immunity)
+  // At ICA→∞: phi→phi0*(1-1)=0 (full immunity)
+  // IC50 = 8.0, kCA = 0.99  (from Griffin 2010 Table S2)
+  const phi0  = 0.787;
+  const IC50  = 8.0;
+  const kCA   = 0.99;
+
+  // ── Griffin 2010 immunity-to-b function ────────────────────────────────────
+  // b(IB) = b0 * (b1 + (1-b1)/(1+(IB/IB0)^kB))
+  // b0=0.590, b1=0.5, IB0=43.9, kB=2.16  (Griffin 2010 / White 2011)
+  const b0   = 0.590;
+  const b1   = 0.5;
+  const IB0_p = 43.9;  // half-saturation for blood immunity
+  const kB   = 2.16;
+
+  // ── Immunity build rates (Griffin 2010) ────────────────────────────────────
+  // dIB/dt  = EIR/dB - IB/dB    where dB  = 1/0.00706 ≈ 142 days turnover
+  // dICA/dt = incidence/dCA - ICA/dCA  where dCA = 1/0.00151 ≈ 662 days
+  const dB  = 1 / 0.00706;   // ≈ 142 days
+  const dCA = 1 / 0.00151;   // ≈ 662 days
+
+  const b0_val = b0; // alias for clarity
+
+  // ── Shared flux computation used by both drift and noise ─────────────────
+  function fluxes(t, y) {
+    let [S, D, Tr, A, U, IB, ICA, E, L, Pup, Sm, Pm, Im] = y;
+    S=Math.max(0,S); D=Math.max(0,D); Tr=Math.max(0,Tr);
+    A=Math.max(0,A); U=Math.max(0,U);
+    IB=Math.max(0,IB); ICA=Math.max(0,ICA);
+
+    const Nhuman = Math.max(1, S + D + Tr + A + U);
+
+    // ── Seasonality ──────────────────────────────────────────────────────────
+    const season = Math.max(0.05, 1 + seasonal * Math.sin(2*Math.PI*t/365 - Math.PI/2));
+    const EIR_t  = EIR_daily * season;
+
+    // ── Vector control ────────────────────────────────────────────────────────
+    const bednet_block     = bednets * netEfficacy;
+    const irs_block        = irs * 0.6 * (1 - bednet_block);
+    const lambda_reduction = Math.max(0.02, 1 - bednet_block - irs_block);
+
+    // ── Vaccine ───────────────────────────────────────────────────────────────
+    const vaccine_protect = Math.min(0.99, vaccine * vaccEfficacy);
+
+    // ── Griffin 2010 b(IB): probability of infection given an infective bite ──
+    // Saturating function — never goes to zero, bottoms out at b0*b1 = 0.295
+    const b_eff = b0_val * (b1 + (1-b1) / (1 + Math.pow(IB / IB0_p, kB)))
+                  * (1 - vaccine_protect);
+
+    // ── Force of infection ────────────────────────────────────────────────────
+    const Lambda = EIR_t * b_eff * lambda_reduction;
+
+    // ── Griffin 2010 phi(ICA): prob. clinical disease given infection ──────────
+    // Immunity can reduce but not eliminate clinical probability
+    const phi_base = phi0 * (1 - Math.pow(ICA, kCA) / (Math.pow(ICA, kCA) + Math.pow(IC50, kCA)));
+    const phi_eff  = Math.max(0.01, phi_base * (1 - smc * 0.85));
+
+    // ── Treatment ─────────────────────────────────────────────────────────────
+    const fT_eff = Math.min(0.99, fT + mda * 0.25 + rdt_factor * 0.08);
+
+    // ── Infection fluxes (mass-conserving) ───────────────────────────────────
+    const inf_S = Lambda * S;
+    const inf_A = Lambda * A;
+    const inf_U = Lambda * U;
+
+    const clin_from_S  = phi_eff * inf_S;
+    const asymp_from_S = (1 - phi_eff) * inf_S;
+    const clin_from_A  = phi_eff * inf_A;
+    const clin_from_U  = phi_eff * inf_U;
+    const asymp_from_U = (1 - phi_eff) * inf_U;
+
+    const total_clin = clin_from_S + clin_from_A + clin_from_U;
+    const to_D  = (1 - fT_eff) * total_clin;
+    const to_Tr = fT_eff * total_clin;
+
+    // ── Mosquito FOIM ─────────────────────────────────────────────────────────
+    const infectivity = (D * 0.95 + A * 0.45 + U * 0.10) / Nhuman;
+    const FOIM        = infectivity * 0.15 * lambda_reduction;
+
+    // ── Larval mortality ──────────────────────────────────────────────────────
+    const K        = K0 * season;
+    const muE_eff  = muE0 * (1 + (E + L) / K);
+    const muL_eff  = muL0 * (1 + gamma * (E + L) / K);
+    const muM_eff  = muM * (1 + irs * 1.5);
+    const adult_f  = Math.max(0, Sm + Pm + Im);
+    const egg_rate = adult_f * 4.0 * season;
+
+    return {
+      birth: mu * Nhuman,
+      inf_S, asymp_from_S, clin_from_S,
+      inf_A, clin_from_A,
+      inf_U, asymp_from_U, clin_from_U,
+      to_D, to_Tr,
+      Lambda, EIR_t, lambda_reduction,
+      Nhuman, phi_eff,
+      K, muE_eff, muL_eff, muM_eff, egg_rate, FOIM
+    };
+  }
+
+  // ── Drift (deterministic part) ────────────────────────────────────────────
+  function drift(t, y) {
+    const [S,D,Tr,A,U,IB,ICA,E,L,Pup,Sm,Pm,Im] = y.map(v=>Math.max(0,v));
+    const f = fluxes(t, y);
+
+    const dS   = f.birth + rT*Tr + rU*U - f.inf_S - mu*S;
+    const dD   = f.to_D  - (rD + mu)*D;
+    const dTr  = f.to_Tr - (rT + mu)*Tr;
+    const dA   = f.asymp_from_S + f.asymp_from_U + rD*D - f.clin_from_A - (rA + mu)*A;
+    const dU   = rA*A - f.inf_U - (rU + mu)*U;
+
+    // ── Griffin 2010 immunity ODEs ────────────────────────────────────────────
+    // IB  builds at rate EIR(t) per bite, decays with turnover dB
+    const dIB  = f.EIR_t * f.lambda_reduction / dB  - IB  / dB;
+    // ICA builds with clinical exposure per N, decays with turnover dCA
+    const dICA = (f.clin_from_S + f.clin_from_A + f.clin_from_U) / f.Nhuman / dCA
+                 - ICA / dCA;
+
+    // ── Mosquito ODEs ─────────────────────────────────────────────────────────
+    const dE   = f.egg_rate - (f.muE_eff + rEM)*E;
+    const dL   = rEM*E  - (f.muL_eff + rP)*L;
+    const dPup = rP*L   - (muP + muM)*Pup;
+    const dSm  = muP*Pup*0.5 - (f.FOIM + f.muM_eff)*Sm;
+    const dPm  = f.FOIM*Sm   - (1/11.0 + f.muM_eff)*Pm;
+    const dIm  = (1/11.0)*Pm - f.muM_eff*Im;
+
+    return [dS,dD,dTr,dA,dU,dIB,dICA,dE,dL,dPup,dSm,dPm,dIm];
+  }
+
+  // ── Noise (demographic stochasticity via diffusion approximation) ──────────
+  // For each Poisson transition with rate F, noise variance per unit time = F
+  // So noise SD per step = sqrt(F·dt)·Z, implemented in the solver as sqrt(F)
+  // We return the noise *amplitude* (σ) for each compartment.
+  // Conservation: we don't add noise to the immunity or mosquito states —
+  // only the human compartments benefit meaningfully from finite-N noise.
+  function noise(t, y) {
+    const [S,D,Tr,A,U] = y.map(v=>Math.max(0,v));
+    const f = fluxes(t, y);
+
+    // Variance contributions to each compartment from all its fluxes
+    // σ² = sum of |flux rates| (each transition adds variance in both source and sink)
+    const sigS  = Math.sqrt(Math.max(0, f.birth + f.inf_S + rU*U + rT*Tr));
+    const sigD  = Math.sqrt(Math.max(0, f.to_D  + (rD+mu)*D));
+    const sigTr = Math.sqrt(Math.max(0, f.to_Tr + (rT+mu)*Tr));
+    const sigA  = Math.sqrt(Math.max(0, f.asymp_from_S + f.asymp_from_U + rD*D + f.clin_from_A + (rA+mu)*A));
+    const sigU  = Math.sqrt(Math.max(0, rA*A + f.inf_U + (rU+mu)*U));
+
+    // Immunity and mosquito states: no demographic noise (treated as continuous)
+    return [sigS, sigD, sigTr, sigA, sigU, 0, 0, 0, 0, 0, 0, 0, 0];
+  }
+
+  return { drift, noise };
+}
+
+// ============================================================
+// PARAMETERS & STATE
+// ============================================================
+
+let currentParams = {};
+let simResults = null;
+let baselineResults = null;
+let currentChartMode = 'pfpr';
+
+function getParams() {
+  const N = parseInt(document.getElementById('popSize').value);
+  return {
+    N,
+    EIR_base:    parseFloat(document.getElementById('eir').value),
+    fT:          parseFloat(document.getElementById('treatment').value),
+    phi:         0.78,
+    rD:          1/5.0,   // days
+    rA:          1/125.0,
+    rU:          1/35.0,
+    rT:          1/5.0,
+    mu:          1/(65*365), // ~65 year lifespan
+    muM:         1/parseFloat(document.getElementById('mosqLife').value),
+    mosqLife:    parseFloat(document.getElementById('mosqLife').value),
+    rP:          1/6.64, rEM: 1/6.64,
+    muE0:        0.034, muL0: 0.035, muP: 0.25,
+    gamma:       13.25, K0:  N * 20,
+    seasonal:    parseFloat(document.getElementById('seasonal').value),
+    bednets:     parseFloat(document.getElementById('bednets').value),
+    netEfficacy: parseFloat(document.getElementById('netEfficacy').value),
+    irs:         parseFloat(document.getElementById('irs').value),
+    vaccine:     parseFloat(document.getElementById('vaccine').value),
+    vaccEfficacy:parseFloat(document.getElementById('vaccEfficacy').value),
+    smc:         parseFloat(document.getElementById('smc').value),
+    mda:         parseFloat(document.getElementById('mda').value),
+    treatment_boost: 0,
+    rdt_factor:  parseFloat(document.getElementById('rdt').value),
+  };
+}
+
+function computeCosts(p) {
+  const N = p.N;
+  let costPerNet = 5;
+  if (p.netEfficacy > 0.7) {
+    costPerNet += 3;
+  }
+  let costPerIRS = 8;
+  let costPerVaccine = 5.0;
+  let costPerMDA = 5;
+  let costPerRDT = 0.50;
+  let costPerTreatment = 2.50;
+
+  const vectorCost = Math.round(p.bednets * N * costPerNet + p.irs * N / 4 * costPerIRS);
+  const vaccineCost = Math.round(p.vaccine * N * 0.25 * 4 * costPerVaccine   // 25% are under-5
+                                + p.smc * N * 0.25 * 3 * costPerMDA);
+  const clinicalCost = Math.round(p.fT * N * 0.1 * costPerTreatment   // ~10% annual incidence treated
+                                 + p.mda * N * 2 * costPerMDA
+                                 + p.rdt_factor * N * 0.1 * costPerRDT);
+  return { vectorCost, vaccineCost, clinicalCost, total: vectorCost + vaccineCost + clinicalCost };
+}
+
+function updateParams() {
+  const p = getParams();
+  const TOTAL_BUDGET = 25000;
+
+  // Update display values
+  document.getElementById('bednetsVal').textContent = Math.round(p.bednets*100)+'%';
+  document.getElementById('irsVal').textContent = Math.round(p.irs*100)+'%';
+  document.getElementById('netEfficacyVal').textContent = Math.round(p.netEfficacy*100)+'%';
+  document.getElementById('vaccineVal').textContent = Math.round(p.vaccine*100)+'%';
+  document.getElementById('smcVal').textContent = Math.round(p.smc*100)+'%';
+  document.getElementById('vaccEfficacyVal').textContent = Math.round(p.vaccEfficacy*100)+'%';
+  document.getElementById('treatmentVal').textContent = Math.round(p.fT*100)+'%';
+  document.getElementById('mdaVal').textContent = Math.round(p.mda*100)+'%';
+  document.getElementById('rdtVal').textContent = Math.round(p.rdt_factor*100)+'%';
+  document.getElementById('eirVal').textContent = p.EIR_base;
+  document.getElementById('seasonalVal').textContent = p.seasonal.toFixed(2);
+  document.getElementById('yearsVal').textContent = document.getElementById('years').value+' yr';
+  document.getElementById('mosqLifeVal').textContent = parseFloat(document.getElementById('mosqLife').value).toFixed(1);
+
+  // Update budget
+  const costs = computeCosts(p);
+  document.getElementById('vectorCost').textContent = '$'+costs.vectorCost.toLocaleString();
+  document.getElementById('vaccineCost').textContent = '$'+costs.vaccineCost.toLocaleString();
+  document.getElementById('clinicalCost').textContent = '$'+costs.clinicalCost.toLocaleString();
+
+  const spent = costs.total;
+  const pct = Math.min(100, spent / TOTAL_BUDGET * 100);
+  document.getElementById('budgetFill').style.width = pct+'%';
+  document.getElementById('budgetFill').style.background = pct > 90
+    ? 'linear-gradient(90deg, #E5353C, #FF7F31)'
+    : 'linear-gradient(90deg, var(--accent), var(--accent2))';
+  document.getElementById('spentAmount').textContent = '$'+spent.toLocaleString();
+  document.getElementById('remainingAmount').textContent = '$'+(TOTAL_BUDGET-spent).toLocaleString();
+  document.getElementById('remainingAmount').style.color = spent > TOTAL_BUDGET ? 'var(--red)' : 'var(--accent)';
+}
+
+// ============================================================
+// RUN SIMULATION
+// Two-phase approach matching malariasimulation set_equilibrium():
+//   Phase 1 (SPINUP): run baseline only for SPINUP_YEARS to reach
+//                     true numerical equilibrium.
+//   Phase 2 (INTERVENTION): from the spinup end-state, run two arms:
+//                     • control  — no interventions (stays flat)
+//                     • intervention — with user-chosen interventions
+// ============================================================
+
+const SPINUP_YEARS = 10;  // years to reach equilibrium before interventions
+const IC50_GUESS   = 8.0; // clinical immunity half-saturation (Griffin 2010)
+
+function runSimulation() {
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Simulating...';
+
+  const badge = document.getElementById('statusBadge');
+  badge.className = 'status-badge running';
+  badge.innerHTML = '<div class="pulse"></div> RUNNING';
+
+  setTimeout(() => {
+    const p      = getParams();
+    const years  = parseInt(document.getElementById('years').value);
+    const noiseS = parseFloat(document.getElementById('noiseScale').value);
+    const dt     = 1.0;   // 1-day steps (SDE); RK4 spinup uses dt=0.5
+    const N      = p.N;
+
+    // ── Baseline params (no interventions) ───────────────────────────────────
+    const p_base = { ...p, bednets:0, irs:0, vaccine:0, smc:0, mda:0, fT:0.05, rdt_factor:0 };
+
+    // ── Initial guess calibrated to Griffin 2010 Table S2 at EIR=50 ─────────
+    // At EIR=50: S≈20%, A≈38%, U≈40%, D≈1.5%, Tr≈0.5%
+    // PfPR = (D+A)/N ≈ 40%  (mostly asymptomatic)
+    // For other EIRs, scale nonlinearly — lower EIR means more S
+    const e  = Math.max(1, p.EIR_base);
+    const fA  = 0.38 * Math.min(1, Math.log(e) / Math.log(50));
+    const fU  = 0.40 * Math.min(1, Math.log(e) / Math.log(50));
+    const fD  = 0.015 * Math.min(1, e / 50);
+    const fTr = 0.005 * Math.min(1, e / 50);
+    const fS  = Math.max(0.05, 1 - fA - fU - fD - fTr);
+
+    // IB at EIR=50 equilibrium: IB* = EIR_daily * lambda_reduction / (1/dB) * dB
+    //   = EIR_daily * dB  ≈ (50/365)*142 ≈ 19.5
+    //   phi(ICA*): back-solve from equilibrium clinical fraction
+    const IB_guess  = (e / 365) * 142;
+    const ICA_guess = Math.pow(IC50_GUESS * (fD / (0.787 - fD)), 1 / 0.99);
+
+    // Mosquito initial conditions
+    const Mf0  = N * 1.5 * Math.min(2, e / 50);
+    const muM0 = 1 / p.mosqLife;
+    const Sm0  = Mf0 * 0.83;
+    const Pm0  = Mf0 * 0.15;
+    const Im0  = Mf0 * 0.02;
+    const egg0 = Mf0 * 4.0;
+    const E0   = egg0 / (p.muE0 * 2 + p.rEM);
+    const L0   = p.rEM * E0 / (p.muL0 * (1 + p.gamma) + p.rP);
+    const P0   = p.rP  * L0 / (p.muP + muM0);
+
+    const y_guess = [N*fS, N*fD, N*fTr, N*fA, N*fU,
+                     Math.max(1, IB_guess), Math.max(0.1, ICA_guess||0.5),
+                     E0, L0, P0, Sm0, Pm0, Im0];
+
+    // ── PHASE 1: Deterministic spin-up (RK4, 10 years) ───────────────────────
+    // Uses the drift only — gets us to the ODE fixed point cleanly.
+    const spinupT = SPINUP_YEARS * 365;
+    const { drift: driftBase } = malariaODE(p_base);
+    const spinup  = rk4(driftBase, y_guess, 0, spinupT, 0.5);
+    const y_eq    = spinup[spinup.length - 1].y;
+
+    // ── PHASE 2: SDE run from equilibrium ────────────────────────────────────
+    const T = years * 365;
+    const { drift: driftIntv, noise: noiseIntv } = malariaODE(p);
+    const { drift: driftCont, noise: noiseCont  } = malariaODE(p_base);
+
+    simResults      = eulerMaruyama(driftIntv, noiseIntv, y_eq, 0, T, dt, noiseS);
+    baselineResults = eulerMaruyama(driftCont, noiseCont, y_eq, 0, T, dt, noiseS);
+
+    // Compute metrics
+    computeMetrics(simResults, baselineResults, p, N);
+    drawChart();
+
+    btn.disabled = false;
+    btn.textContent = '▶ Run Simulation';
+    badge.className = 'status-badge ready';
+    badge.innerHTML = '<div style="width:6px;height:6px;background:var(--accent);border-radius:50%;"></div> DONE';
+  }, 50);
+}
+
+function computeMetrics(results, baseline, p, N) {
+  // Final prevalence (PfPR) — use last 10% of simulation
+  const tail = results.slice(Math.floor(results.length * 0.9));
+  const mean_D = tail.reduce((s,r) => s + r.y[1], 0) / tail.length;
+  const mean_A = tail.reduce((s,r) => s + r.y[3], 0) / tail.length;
+  const PfPR = (mean_D + mean_A) / N;
+
+  // Peak infections per 1000
+  const peak = Math.max(...results.map(r => (r.y[1] + r.y[3]) / N * 1000));
+
+  // Total clinical cases (integral of D flux)
+  let totalCases = 0;
+  for (let i = 1; i < results.length; i++) {
+    const dt_i = results[i].t - results[i-1].t;
+    const D_mean = (results[i].y[1] + results[i-1].y[1]) / 2;
+    totalCases += D_mean * (1/5.0) * dt_i; // D * rD = new cases recovered
+  }
+
+  // Baseline cases
+  let baselineCases = 0;
+  for (let i = 1; i < baseline.length; i++) {
+    const dt_i = baseline[i].t - baseline[i-1].t;
+    const D_mean = (baseline[i].y[1] + baseline[i-1].y[1]) / 2;
+    baselineCases += D_mean * (1/5.0) * dt_i;
+  }
+
+  const averted = Math.max(0, Math.round(baselineCases - totalCases));
+  const costs = computeCosts(p);
+  const costPerCase = averted > 0 ? '$' + (costs.total / averted).toFixed(2) : 'N/A';
+
+  // Final EIR estimate
+  const finalIm = results[results.length-1].y[12];
+  const finalEIR = (finalIm / N * 1000 * 0.5 * 365).toFixed(1);
+
+  document.getElementById('mPfPR').textContent = (PfPR * 100).toFixed(1) + '%';
+  document.getElementById('mPfPR').style.color = PfPR > 0.3 ? 'var(--red)' : PfPR > 0.1 ? 'var(--yellow)' : 'var(--green)';
+  document.getElementById('mPeak').textContent = peak.toFixed(1);
+  document.getElementById('mCases').textContent = Math.round(totalCases).toLocaleString();
+  document.getElementById('mAverted').textContent = averted.toLocaleString();
+  document.getElementById('mCostEffective').textContent = costPerCase;
+  document.getElementById('mEIR').textContent = finalEIR;
+}
+
+// ============================================================
+// CHARTING
+// ============================================================
+
+function switchChart(mode, btn) {
+  currentChartMode = mode;
+  document.querySelectorAll('.chart-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const legends = {
+    human: `
+      <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>S — Susceptible</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FF7F31"></div>D — Clinical</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>A — Asymptomatic</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>U — Sub-patent</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#FF7F31"></div>Tr — Treated</div>`,
+    mosquito: `
+      <div class="legend-item"><div class="legend-dot" style="background:#004A98"></div>E — Early larvae</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9"></div>L — Late larvae</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#002B49"></div>Sm — Susceptible adult</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E5353C"></div>Im — Infectious adult</div>`,
+    eir: `
+      <div class="legend-item"><div class="legend-dot" style="background:#8C6D2C"></div>Intervention EIR proxy</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E5353C"></div>Baseline EIR proxy</div>`,
+    immunity: `
+      <div class="legend-item"><div class="legend-dot" style="background:#002B49"></div>IB — Blood immunity</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#00BC70"></div>ICA — Clinical immunity</div>`
+  };
+
+  document.getElementById('chartLegend').innerHTML = legends[mode] || '';
+  if (simResults) drawChart();
+}
+
+function drawChart() {
+  const canvas = document.getElementById('mainChart');
+  const ctx = canvas.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth;
+  const H = 320;
+  canvas.width = W * DPR;
+  canvas.height = H * DPR;
+  ctx.scale(DPR, DPR);
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f3f0e9';
+  ctx.fillRect(0, 0, W, H);
+
+  const data = simResults;
+  if (!data || data.length < 2) {
+    ctx.fillStyle = '#54565A';
+    ctx.font = '14px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Press ▶ Run Simulation to see results', W/2, H/2);
+    return;
+  }
+
+  const PAD = { top: 24, right: 32, bottom: 44, left: 64 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+  const N = getParams().N;
+  const years = parseInt(document.getElementById('years').value);
+  const tMax = data[data.length - 1].t;
+
+  // ── Helper: map data value to canvas coords ──────────────────────────────
+  function tx(t) { return PAD.left + (t / tMax) * cW; }
+  function ty(v, vMax) { return PAD.top + cH - Math.max(0, v / vMax) * cH * 0.92; }
+
+  // ── Grid ─────────────────────────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(140,109,44,0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 5; i++) {
+    const y = PAD.top + cH * i / 5;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
+  }
+  for (let i = 0; i <= years; i++) {
+    const x = tx(i * 365);
+    ctx.beginPath(); ctx.moveTo(x, PAD.top); ctx.lineTo(x, PAD.top + cH); ctx.stroke();
+  }
+
+  // ── Build series for each mode ────────────────────────────────────────────
+  // Each series: { values: Float32Array, color, lw, dash, label }
+  // For two-arm modes the intervention arm is solid, control is dashed same color
+  // or a distinct muted color.
+
+  const intv = simResults;
+  const ctrl = baselineResults;
+
+  function getVals(src, fn) {
+    return src.map(d => fn(d.y));
+  }
+
+  // PfPR = (D + A) / N   — the key output comparable to malariasimulation vignette
+  const pfpr_intv = getVals(intv, y => (y[1] + y[3]) / N);
+  const pfpr_ctrl = getVals(ctrl, y => (y[1] + y[3]) / N);
+
+  let allSeries = [];
+  let yLabel = '';
+  let yMax = 1;
+  let chartTitle = '';
+
+  if (currentChartMode === 'pfpr') {
+    yMax = Math.max(0.05,
+      Math.max(...pfpr_ctrl) * 1.15,
+      Math.max(...pfpr_intv) * 1.15
+    );
+    allSeries = [
+      { vals: pfpr_ctrl, color: '#E5353C', lw: 2,   dash: [6,3] },
+      { vals: pfpr_intv, color: '#8C6D2C', lw: 2.5, dash: [] },
+    ];
+    yLabel = 'PfPR₂₋₁₀';
+    chartTitle = 'PfPR₂₋₁₀ — Intervention vs Control';
+
+  } else if (currentChartMode === 'human') {
+    const D_intv = getVals(intv, y => y[1]);
+    const D_ctrl = getVals(ctrl, y => y[1]);
+    const A_intv = getVals(intv, y => y[3]);
+    const S_intv = getVals(intv, y => y[0]);
+    const U_intv = getVals(intv, y => y[4]);
+    const Tr_intv = getVals(intv, y => y[2]);
+    yMax = Math.max(...S_intv, ...D_intv, ...A_intv) * 1.1 || N;
+    allSeries = [
+      { vals: S_intv,  color: '#004A98', lw: 2,   dash: [] },
+      { vals: A_intv,  color: '#00BC70', lw: 2,   dash: [] },
+      { vals: D_intv,  color: '#FF7F31', lw: 2.5, dash: [] },
+      { vals: D_ctrl,  color: '#FF7F31', lw: 1.5, dash: [5,4], alpha: 0.5 },
+      { vals: U_intv,  color: '#002B49', lw: 1.5, dash: [] },
+      { vals: Tr_intv, color: '#FF7F31', lw: 1.5, dash: [] },
+    ];
+    yLabel = 'People';
+    chartTitle = 'Human Compartments (solid=intervention, dashed=control D)';
+
+  } else if (currentChartMode === 'mosquito') {
+    const Sm_i = getVals(intv, y => y[10]);
+    const Im_i = getVals(intv, y => y[12]);
+    const Im_c = getVals(ctrl, y => y[12]);
+    const E_i  = getVals(intv, y => y[7] * 0.005);
+    yMax = Math.max(...Sm_i, ...E_i) * 1.1 || 1;
+    allSeries = [
+      { vals: E_i,  color: '#004A98', lw: 1.5, dash: [] },
+      { vals: Sm_i, color: '#002B49', lw: 2,   dash: [] },
+      { vals: Im_c, color: '#E5353C', lw: 1.5, dash: [5,3] },
+      { vals: Im_i, color: '#E5353C', lw: 2.5, dash: [] },
+    ];
+    yLabel = 'Mosquitoes';
+    chartTitle = 'Mosquito Population (Im: solid=intervention, dashed=control)';
+
+  } else if (currentChartMode === 'eir') {
+    const eir_i = getVals(intv, y => y[12] / N * 365 * 0.5);
+    const eir_c = getVals(ctrl, y => y[12] / N * 365 * 0.5);
+    yMax = Math.max(...eir_c, 1) * 1.2;
+    allSeries = [
+      { vals: eir_c, color: '#E5353C', lw: 2,   dash: [6,3] },
+      { vals: eir_i, color: '#8C6D2C', lw: 2.5, dash: [] },
+    ];
+    yLabel = 'EIR (approx)';
+    chartTitle = 'Entomological Inoculation Rate — Intervention vs Control';
+
+  } else if (currentChartMode === 'immunity') {
+    const ib_i  = getVals(intv, y => y[5]);
+    const ica_i = getVals(intv, y => y[6]);
+    const ib_c  = getVals(ctrl, y => y[5]);
+    yMax = Math.max(...ib_i, ...ib_c) * 1.2 || 1;
+    allSeries = [
+      { vals: ib_c,  color: '#002B49', lw: 1.5, dash: [5,3] },
+      { vals: ib_i,  color: '#002B49', lw: 2.5, dash: [] },
+      { vals: ica_i, color: '#00BC70', lw: 2,   dash: [] },
+    ];
+    yLabel = 'Immunity score';
+    chartTitle = 'Immunity Dynamics (IB solid=intervention, dashed=control)';
+  }
+
+  // Update chart title
+  const titleEl = document.getElementById('chartTitle');
+  if (titleEl) titleEl.textContent = chartTitle;
+
+  // ── Draw series ───────────────────────────────────────────────────────────
+  allSeries.forEach(({ vals, color, lw, dash, alpha }) => {
+    const times = intv.map(d => d.t);  // same length assumed
+    ctx.save();
+    ctx.globalAlpha = alpha || 1;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw || 2;
+    ctx.setLineDash(dash || []);
+    ctx.beginPath();
+    vals.forEach((v, i) => {
+      const x = tx(times[i]);
+      const y = ty(v, yMax);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  });
+
+  // ── Y-axis labels ─────────────────────────────────────────────────────────
+  ctx.fillStyle = '#54565A';
+  ctx.font = '10px Space Mono, monospace';
+  ctx.textAlign = 'right';
+  const nTicks = 5;
+  for (let i = 0; i <= nTicks; i++) {
+    const v = yMax * i / nTicks;
+    const y = PAD.top + cH - (i / nTicks) * cH * 0.92;
+    let label;
+    if (currentChartMode === 'pfpr') {
+      label = (v * 100).toFixed(0) + '%';
+    } else if (v >= 1000) {
+      label = (v / 1000).toFixed(1) + 'k';
+    } else {
+      label = v.toFixed(v < 10 ? 2 : 0);
+    }
+    ctx.fillText(label, PAD.left - 6, y + 4);
+  }
+
+  // Y-axis label rotated
+  ctx.save();
+  ctx.translate(12, PAD.top + cH / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.font = '9px Space Mono, monospace';
+  ctx.fillText(yLabel, 0, 0);
+  ctx.restore();
+
+  // ── X-axis labels ─────────────────────────────────────────────────────────
+  ctx.fillStyle = '#54565A';
+  ctx.font = '10px Space Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let i = 0; i <= years; i++) {
+    const x = tx(i * 365);
+    ctx.fillText('Yr ' + i, x, PAD.top + cH + 20);
+  }
+
+  // ── Axis border ───────────────────────────────────────────────────────────
+  ctx.strokeStyle = 'rgba(140,109,44,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(PAD.left, PAD.top);
+  ctx.lineTo(PAD.left, PAD.top + cH);
+  ctx.lineTo(PAD.left + cW, PAD.top + cH);
+  ctx.stroke();
+
+  // ── Shade the gap between control and intervention (PfPR mode only) ───────
+  if (currentChartMode === 'pfpr' && pfpr_ctrl && pfpr_intv) {
+    const times = intv.map(d => d.t);
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = '#8C6D2C';
+    ctx.beginPath();
+    // forward along control
+    times.forEach((t, i) => {
+      const x = tx(t);
+      const y = ty(pfpr_ctrl[i], yMax);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    // backward along intervention
+    for (let i = times.length - 1; i >= 0; i--) {
+      ctx.lineTo(tx(times[i]), ty(pfpr_intv[i], yMax));
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+updateParams();
+
+// Draw placeholder message immediately
+(function() {
+  const canvas = document.getElementById('mainChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const DPR = window.devicePixelRatio || 1;
+  canvas.width = canvas.offsetWidth * DPR;
+  canvas.height = 320 * DPR;
+  ctx.scale(DPR, DPR);
+  ctx.fillStyle = '#f3f0e9';
+  ctx.fillRect(0, 0, canvas.offsetWidth, 320);
+  ctx.fillStyle = 'rgba(140,109,44,0.1)';
+  ctx.fillRect(canvas.offsetWidth/2 - 220, 130, 440, 60);
+  ctx.fillStyle = '#54565A';
+  ctx.font = '13px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('▶  Press Run Simulation to see results', canvas.offsetWidth/2, 166);
+})();
+
+window.addEventListener('resize', () => {
+  if (simResults) drawChart();
+  else {
+    const canvas = document.getElementById('mainChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth * (window.devicePixelRatio||1);
+    canvas.height = 320 * (window.devicePixelRatio||1);
+    ctx.scale(window.devicePixelRatio||1, window.devicePixelRatio||1);
+    ctx.fillStyle = '#f3f0e9';
+    ctx.fillRect(0, 0, canvas.offsetWidth, 320);
+  }
+});
+</script>
+</body>
+</html>

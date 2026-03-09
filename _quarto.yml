@@ -1,17 +1,36 @@
 project:
   type: website
   output-dir: _site
+  render:
+    - "*.qmd"
+    - presentation/overview.qmd
+description-meta: "Infectious Disease Research & Epidemiology | Wake Forest School of Medicine"
 
 website:
+  favicon: assets/logo.png
   title: "Malaria Control Strategy Lab"
   navbar:
+    pinned: true
+    background: primary
+    title: Malaria Control Strategy Lab
+    logo: assets/logo.png
     left:
-      - text: "Simulation Lab"
+      - text: "Home"
         href: index.qmd
+      - text: "Simulation Lab"
+        href: docs/malaria-simulator.html
       - text: "Lecture Presentation"
         href: presentation/overview.qmd
+    page-footer:
+      center:
+      - text: "Disclaimer"
+        href: disclaimer.qmd
+
 
 format:
   html:
-    theme: cosmo
     toc: true
+    code-copy: true
+    code-overflow: wrap
+    theme: [cerulean, theme.scss]
+    css: assets/styles.css

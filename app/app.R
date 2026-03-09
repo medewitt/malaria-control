@@ -8,6 +8,11 @@ library(bslib)
 library(malariasimulation)
 library(ggplot2)
 
+# Load vaccine and drug profiles from malariasimulation
+# data("AL_params", package = "malariasimulation")
+# data("r21_profile", package = "malariasimulation")
+# data("r21_booster_profile", package = "malariasimulation")
+
 # --- Configuration & Costs ---
 BUDGET_CAP <- 50000
 COST_NET <- 4.50 / 2 # Per person (2 people per net)
@@ -138,6 +143,8 @@ server <- function(input, output) {
 
   output$prev_plot <- renderPlot({
     res <- sim_results()
+    print(colnames(res)) # Add this to see actual column names
+    print(head(res))
     ggplot(res, aes(x = timestep, y = n_detect_lm_730_3650 / n_age_730_3650)) +
       geom_line(color = "#2c3e50", size = 1) +
       labs(x = "Days", y = "Prevalence (2-10 yrs)") +

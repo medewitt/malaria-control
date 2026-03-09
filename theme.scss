@@ -1,0 +1,148 @@
+@import url('/assets/fonts.css');
+/*-- scss:defaults --*/
+//primary colors
+$primary: #000000;
+$primary-rgb: 140, 109, 44;
+$primary75: rgba(140, 109, 44,0.75);
+$primary50: rgba(140, 109, 44,0.50);
+$primary25: rgba(140, 109, 44,0.25);
+$primary10: rgba(140, 109, 44,0.10);
+$primary10fixed: #f3f0e9;
+$primarydark: #624d17;
+$primarylight: #CFD2D3; //wakelightgray
+$black: #000000;
+$white: #FFFFFF;
+$emphasis-color: primary;
+$emphasis-color-rgb: $primary-rgb;
+
+//$primary: #a67f31; //old gold?
+$emphasis-color: $primary;
+$emphasis-color-rgb: $primary-rgb;
+
+//secondary colors
+$wakegold: #8C6D2C; //web gold
+$goldonblack: #cc9f2e;
+$wakegray: #54565A;
+$wakeyellow: #FDC314;
+$wakegreen: #6BA539;
+$waketeal: #008C95;
+$wakelightgray: #CFD2D3;
+$wakecoolgray: #A7A8A9;
+$wakered: #861F41;
+$wakenavy: #002B49;
+
+$atriumteal: #00818B;
+$atriumgreen: #00BC70;
+$atriumblue: #004A98;
+$atriumyellow: #F0C300;
+$atriumorange: #FF7F31;
+$atriumred: #E5353C;
+
+
+//$secondary: $wakegold;
+$red: $atriumred; //danger
+$blue: $atriumblue;
+$indigo: $wakenavy;
+$cyan: $atriumteal; //info
+$green: $atriumgreen; //success
+$yellow: $atriumyellow; //warning
+$gray: $wakecoolgray;
+$lightgray: $wakelightgray;
+$darkgray: $wakegray;
+
+
+$secondary: $lightgray; //card backgrounds and sidebar
+$light: $primarylight;
+$dark: $black;
+
+
+//page colors
+$navbar-bg: $primary;
+$navbar-fg: $white;
+$navbar-hl: $goldonblack;
+[aria-current]:not([aria-current="false"]), .nav-footer a:hover {
+  color: $navbar-hl;
+}
+
+$body-bg: $white;
+$body-color: $black;
+$link-color: $wakegold;
+$link-hover-color: $primarydark;
+$toc-color: $primary;
+$footer-bg: $primary;
+$footer-fg: $white;
+$footer-hl: $secondary;
+$hr-color: $secondary;
+
+//fonts
+$font-family-sans-serif: "Nunito Sans", Arial, sans-serif !default;
+$font-family-serif: Garamond, serif !default;
+$link-decoration: none !default;
+$link-hover-decoration: underline !default;
+$link-shade-percentage: 0% !default;
+$h1-font-size: 32px;
+$font-size-root: 16px;
+
+
+//toc
+
+#toc-title, .quarto-listing-category-title {
+    text-transform: uppercase;
+    font-family: $font-family-serif;
+    font-weight: 700;
+    color: black;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+#toc-title::before, .quarto-listing-category-title::before {
+    /*font-family: "FontAwesome";*/
+    /*content: "\e064";*/
+    display: inline-flex;
+    padding-right: 5px;
+    color: black;
+    font-size: smaller;
+}
+
+
+/*-- scss:rules --*/
+
+
+//headings
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+  font-family: $font-family-serif;
+  font-weight: 700;
+  color: $darkgray;
+  margin-top:0.9rem;
+}
+
+h1 {
+  font-family: $font-family-sans-serif;
+  font-weight: 400;
+  color: $darkgray;
+}
+
+h2 {
+	border-bottom-color: $primary25;
+
+}
+
+//listings
+
+h3.listing-title a, .listing-title.h3 a {
+	color: $wakegold;
+}
+
+h3.listing-title a:hover, .listing-title.h3 a:hover {
+	color: $primarydark;
+	text-decoration: underline;
+}
+
+a img.thumbnail-image:hover, a img:hover {
+    opacity: .9;
+    filter: brightness(120%);
+}
+
+.listing-description a:hover {
+	color: $darkgray;
+}

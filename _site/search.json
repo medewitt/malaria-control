@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "presentation/overview.html#the-global-burden",
+    "href": "presentation/overview.html#the-global-burden",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "The Global Burden",
+    "text": "The Global Burden\n\nThe Toll: ~249 million cases and 608,000 deaths annually (2022/23 data).\nThe Target: Reducing incidence by 90% by 2030.\nThe Metric: \\(PfPR_{2-10}\\) (Plasmodium falciparum Parasite Rate in children aged 2–10).\n\nThis is our “gold standard” for measuring community transmission.\n\n\n[Image of malaria transmission cycle]"
+  },
+  {
+    "objectID": "presentation/overview.html#the-intervention-toolbox",
+    "href": "presentation/overview.html#the-intervention-toolbox",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "The Intervention “Toolbox”",
+    "text": "The Intervention “Toolbox”\n\n\n\n\n\n\n\n\nCategory\nTool\nMechanism\n\n\n\n\nVector Control\nLLINs & IRS\nKills/Blocks the mosquito vector\n\n\nPreventative\nVaccines (R21/RTS,S)\nTrains the immune system (pre-erythrocytic)\n\n\nCase Management\nRDTs & ACTs\nDiagnoses and clears parasites from humans"
+  },
+  {
+    "objectID": "presentation/overview.html#why-use-individual-based-models-ibms",
+    "href": "presentation/overview.html#why-use-individual-based-models-ibms",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "Why Use Individual-Based Models (IBMs)?",
+    "text": "Why Use Individual-Based Models (IBMs)?\nStandard models use differential equations for “compartments” (SIR models). But malaria is complex: * Heterogeneity: Not everyone gets bitten equally. * Age-dependence: Children suffer more severe disease than immune adults. * History: Previous infections change your current risk.\n\nmalariasimulation tracks 10,000+ individual agents, each with their own age, net usage, and parasite load."
+  },
+  {
+    "objectID": "presentation/overview.html#the-economic-reality-the-budget-cap",
+    "href": "presentation/overview.html#the-economic-reality-the-budget-cap",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "The Economic Reality: The “Budget Cap”",
+    "text": "The Economic Reality: The “Budget Cap”\nIn public health, we rarely ask “Does it work?” We ask “Is it the best use of our limited dollars?”\nYour Challenge: * Total Population: 10,000 people. * Annual Budget: $50,000. * The Goal: Achieve the lowest \\(PfPR_{2-10}\\) possible without going bankrupt."
+  },
+  {
+    "objectID": "presentation/overview.html#group-a-the-biological-arms-race",
+    "href": "presentation/overview.html#group-a-the-biological-arms-race",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "Group A: The Biological Arms Race",
+    "text": "Group A: The Biological Arms Race\nVaccines vs. Drug Resistance\nThe Dilemma: High vaccine coverage is great but expensive ($25/child). If you spend it all on vaccines, you might use “cheap” drugs that are failing due to resistance.\n\nTask: Compare 80% Vaccine Coverage + Cheap (failing) Drugs vs. 20% Vaccine Coverage + Expensive (effective) Drugs.\nCritical Question: Does the vaccine provide enough “herd protection” to ignore drug resistance?"
+  },
+  {
+    "objectID": "presentation/overview.html#group-b-the-vector-defense",
+    "href": "presentation/overview.html#group-b-the-vector-defense",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "Group B: The Vector Defense",
+    "text": "Group B: The Vector Defense\nBed Nets (LLINs) vs. Indoor Spraying (IRS)\nThe Dilemma: * Nets: Cheap ($4.50), last 3 years, but rely on human behavior. * IRS: Expensive ($7.00/person), lasts 6-12 months, but kills mosquitoes regardless of bed use.\n\nTask: Run a “Universal Net” strategy vs. a “Targeted IRS” strategy.\nCritical Question: What happens to the infection rate in Year 2 when the spray wears off?"
+  },
+  {
+    "objectID": "presentation/overview.html#group-c-the-last-mile",
+    "href": "presentation/overview.html#group-c-the-last-mile",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "Group C: “The Last Mile”",
+    "text": "Group C: “The Last Mile”\nCase Management & CHWs\nThe Dilemma: Prevention is key, but people are already sick. * Passive: Wait for patients to walk 10km to a clinic (40% coverage). * Active: Hire Community Health Workers (CHWs) to find cases ($1,000/worker).\n\nTask: Invest in 20 CHWs vs. investing that $20,000 into more bed nets.\nCritical Question: Is it better to stop the next infection or clear the current one?"
+  },
+  {
+    "objectID": "presentation/overview.html#instructions-for-the-lab",
+    "href": "presentation/overview.html#instructions-for-the-lab",
+    "title": "Malaria Control: Strategy, Economics, and Modeling",
+    "section": "Instructions for the Lab",
+    "text": "Instructions for the Lab\n\nOpen the Malaria Control Web Tool.\nIdentify your Group’s assigned intervention sliders.\nPhase 1: Try to get \\(PfPR\\) below 5% with unlimited budget.\nPhase 2: Apply the $50,000 constraint.\nPhase 3: Present your “Optimal Mix” to the class.\n\n\nRemember: If your budget bar turns red, your strategy is disqualified!"
+  },
+  {
+    "objectID": "disclaimer.html",
+    "href": "disclaimer.html",
+    "title": "Malaria Control Strategy Lab",
+    "section": "",
+    "text": "Disclaimer: The information on this website is for general informational purposes only and SHOULD NOT be relied upon as a substitute for sound professional medical advice, evaluation or care from your physician or other qualified health care provider.\nPlease note that this website is not an official website of Atrium Wake Forest Baptist Health or Wake Forest University School of Medicine. This site was created to inform others about the research activities and work conducted in the Section on Infectious Diseases as part of our wider social media presence.\nThis website includes information about active and ongoing research projects. Research findings presented here may be preliminary, subject to change, and have not necessarily undergone peer review or been published in scientific journals. Information may be updated as research progresses and new findings emerge."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Malaria Control Strategy Lab",
+    "section": "",
+    "text": "This lab allows you to explore different malaria control strategies given a fixed budget. Adjust the sliders to see the impact on malaria prevalence in children aged 2-10 (\\(PfPR_{2-10}\\)) and the associated costs.\n\nLab Instructions\n\nPhase 1: Try to get \\(PfPR\\) below 5% with unlimited budget.\nPhase 2: Apply the $25,000 constraint.\nPhase 3: Present your “Optimal Mix” to the class.\n\n\nNote: If your budget bar turns red, your strategy is disqualified!"
+  }
+]
