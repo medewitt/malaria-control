@@ -7,13 +7,32 @@ format:
 ---
 
 This lab allows you to explore different malaria control strategies given a fixed budget.
-Adjust the sliders to see the impact on malaria prevalence in children aged 2-10 ($PfPR_{2-10}$) and the associated costs.
 
+```{r}
+#| echo: false
+#| output: asis
+config <- yaml::read_yaml("config.yaml")
+modules <- config$modules
 
-### Lab Instructions
-
-1. **Phase 1:** Try to get $PfPR$ below 5% with **unlimited** budget.
-2. **Phase 2:** Apply the $25,000 constraint.
-3. **Phase 3:** Present your "Optimal Mix" to the class.
-
-> **Note:** If your budget bar turns red, your strategy is disqualified!
+cat('<div class="row g-4 mt-3">\n')
+for (mod in modules) {
+  href <- paste0("docs/", mod$href)
+  cat(sprintf(
+    paste0(
+      '<div class="col-md-4">\n',
+      '<a href="%s" class="text-decoration-none">\n',
+      '<div class="card module-card h-100">\n',
+      '<div class="card-body">\n',
+      '<div class="module-icon">%s</div>\n',
+      '<h5 class="card-title">%s</h5>\n',
+      '<p class="card-text text-muted">%s</p>\n',
+      '</div>\n',
+      '</div>\n',
+      '</a>\n',
+      '</div>\n'
+    ),
+    href, mod$icon, mod$title, mod$description
+  ))
+}
+cat("</div>\n")
+```

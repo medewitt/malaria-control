@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnostic Lab — Malaria Screening Strategy Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f3f0e9;
+  --surface2: #CFD2D3;
+  --border: rgba(140,109,44,0.25);
+  --accent: #8C6D2C;
+  --text: #000000;
+  --text-dim: #54565A;
+  --red: #E5353C;
+  --green: #00BC70;
+  --orange: #FF7F31;
+  /* mapped aliases for legacy references */
+  --paper: var(--bg);
+  --paper2: var(--surface);
+  --paper3: #e2d9c6;
+  --ink: var(--text);
+  --ink2: #362a14;
+  --ink3: #54565A;
+  --ink4: #54565A;
+  --rule: rgba(140,109,44,0.25);
+  --rule2: #ddd3bb;
+  /* diagnostic colours */
+  --rdt:    #1a5c8a;
+  --micro:  #2d6b3a;
+  --pcr:    #7a1f4a;
+  --tp:     #1a5c8a;
+  --fp:     #b85c00;
+  --tn:     #2d6b3a;
+  --fn:     #8b1a1a;
+  --safe:   #1f4a1f;
+  --danger: #7a1f1f;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 28px 64px;}
+
+/* ── MASTHEAD ─────────────────────────────────────────────── */
+.masthead{
+  border-bottom:3px double var(--ink3);
+  padding:36px 0 20px;
+  margin-bottom:28px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.journal-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;}
+h1{font-family:Garamond,serif;font-size:clamp(22px,4vw,38px);font-weight:400;line-height:1.1;color:var(--text-dim);letter-spacing:-0.5px;}
+h1 em{font-style:normal;color:var(--accent);}
+.subtitle{font-size:15px;color:var(--ink3);font-style:italic;margin-top:6px;font-family:'Nunito Sans',sans-serif;}
+.specimen-box{border:1px solid var(--rule);padding:10px 16px;background:var(--paper2);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink3);line-height:1.8;min-width:200px;}
+.specimen-box .sp-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);border-bottom:1px solid var(--rule);margin-bottom:6px;padding-bottom:4px;}
+
+/* ── FIELD NOTE ───────────────────────────────────────────── */
+.field-note{background:var(--paper2);border-left:3px solid var(--accent);padding:10px 16px;font-style:italic;font-size:14px;color:var(--ink3);margin-bottom:28px;line-height:1.5;}
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:290px 1fr;gap:28px;align-items:start;}
+@media(max-width:740px){.layout{grid-template-columns:1fr;}}
+
+/* ── CONTROLS ─────────────────────────────────────────────── */
+.ctrl-col{position:sticky;top:16px;display:flex;flex-direction:column;gap:14px;}
+.panel{border:1px solid var(--rule);background:var(--paper2);}
+.panel-title{background:#000000;color:#ffffff;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;padding:5px 12px;}
+.panel-body{padding:14px 16px;}
+
+/* Slider rows */
+.s-group{margin-bottom:14px;}
+.s-group:last-child{margin-bottom:0;}
+.s-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+.s-label{font-size:13px;font-weight:600;color:var(--ink2);}
+.s-label .sub{font-weight:300;font-style:italic;font-size:11px;color:var(--ink4);display:block;}
+.s-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:1px 6px;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--rule);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--paper);box-shadow:0 1px 3px rgba(0,0,0,0.25);cursor:pointer;transition:transform .1s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+
+/* Test selector */
+.test-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:4px;}
+.test-btn{
+  padding:9px 12px;border:1px solid var(--rule);background:var(--paper);
+  font-family:'Nunito Sans',sans-serif;font-size:13px;color:var(--ink3);
+  cursor:pointer;transition:all .15s;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.test-btn:hover{border-color:var(--ink3);}
+.test-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.test-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:0.7;}
+
+/* Strategy buttons */
+.strat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+.strat-btn{padding:7px 8px;border:1px solid var(--rule);background:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);cursor:pointer;transition:all .15s;text-align:center;line-height:1.4;}
+.strat-btn:hover{border-color:var(--ink3);color:var(--ink);}
+.strat-btn.on{background:var(--ink2);color:var(--paper);border-color:var(--ink2);}
+
+/* Metrics */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.metric{border:1px solid var(--rule);padding:9px 11px;background:var(--paper);}
+.m-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;}
+.m-value{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;line-height:1;}
+.m-value.blue{color:var(--rdt);}
+.m-value.green{color:var(--micro);}
+.m-value.red{color:var(--fn);}
+.m-value.amber{color:var(--accent);}
+.m-sub{font-size:10px;color:var(--ink4);font-style:italic;margin-top:2px;}
+
+/* Cost readout */
+.cost-readout{font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:2;color:var(--ink4);}
+.cost-readout .cline{display:flex;justify-content:space-between;}
+.cost-readout .cv{color:var(--accent);}
+.cost-total{border-top:1px solid var(--rule);padding-top:5px;margin-top:4px;display:flex;justify-content:space-between;font-weight:500;}
+.cost-total .cv{color:var(--ink);font-size:12px;}
+
+/* ── CHARTS ───────────────────────────────────────────────── */
+.charts-col{display:flex;flex-direction:column;gap:20px;}
+.chart-block{margin-bottom:0;}
+.chart-hd{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule);margin-bottom:10px;padding-bottom:6px;}
+.chart-title{font-family:Garamond,serif;font-size:17px;font-weight:400;font-style:italic;color:var(--text);}
+.chart-fig{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--ink4);text-transform:uppercase;}
+.chart-wrap{position:relative;height:230px;background:var(--paper);border:1px solid var(--rule);padding:10px;}
+.chart-foot{font-size:11px;font-style:italic;color:var(--ink4);margin-top:6px;line-height:1.4;}
+
+/* Confusion matrix */
+.conf-matrix{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:4px;}
+.conf-cell{padding:10px 12px;text-align:center;}
+.conf-cell .cc-label{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.conf-cell .cc-val{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:500;line-height:1;}
+.conf-cell .cc-sub{font-size:10px;font-style:italic;color:rgba(255,255,255,0.7);margin-top:2px;}
+.conf-tp{background:var(--tp);color:white;}
+.conf-fp{background:var(--fp);color:white;}
+.conf-fn{background:var(--fn);color:white;}
+.conf-tn{background:var(--tn);color:white;}
+.conf-label-row{display:flex;gap:3px;margin-bottom:3px;}
+.conf-label-cell{flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);padding:4px;}
+
+/* Two-panel row */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:680px){.two-col{grid-template-columns:1fr;}}
+
+/* Bayesian sweep canvas */
+#bayesCanvas{display:block;width:100%;height:220px;background:var(--paper);border:1px solid var(--rule);}
+
+/* Interpretation */
+.interp-panel{border:1px solid var(--rule);background:var(--paper2);}
+.interp-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);padding:5px 12px;border-bottom:1px solid var(--rule);}
+.interp-body{padding:12px 14px;font-size:13.5px;line-height:1.7;color:var(--ink2);}
+.interp-body strong{color:var(--ink);font-weight:600;}
+.interp-body .warn{color:var(--danger);font-weight:600;}
+.interp-body .good{color:var(--safe);font-weight:600;}
+
+/* Equation box */
+.eq-box{background:var(--paper2);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:2;color:var(--ink4);}
+.eq-box h3{font-family:'Nunito Sans',sans-serif;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px;}
+.eq{color:var(--accent);}
+
+/* footer */
+.pg-footer{border-top:2px solid var(--rule);margin-top:40px;padding-top:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.pg-footer div{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink4);line-height:1.8;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.chart-block{animation:fadeUp .35s ease both;}
+.chart-block:nth-child(2){animation-delay:.07s;}
+.chart-block:nth-child(3){animation-delay:.14s;}
+.chart-block:nth-child(4){animation-delay:.21s;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div>
+    <div class="journal-tag">Field Epidemiology · Diagnostic Strategy Lab</div>
+    <h1>Malaria Diagnostics &amp;<br><em>Screening Strategy</em></h1>
+    <div class="subtitle">Bayesian performance, test operating characteristics, and the cost of missed cases</div>
+  </div>
+  <div class="specimen-box">
+    <div class="sp-title">Tests in Use</div>
+    <div>● RDT (HRP2/pLDH)</div>
+    <div>● Microscopy (thick film)</div>
+    <div>● PCR (nested/qPCR)</div>
+    <div style="margin-top:6px;color:var(--ink4)">Pop. = 10,000 persons</div>
+    <div style="color:var(--ink4)">1,000 simulated screens</div>
+  </div>
+</div>
+
+<!-- FIELD NOTE -->
+<div class="field-note">
+  ⚕ The same test sensitivity and specificity produce very different predictive values depending on background prevalence. Adjust prevalence, test characteristics, and screening strategy to observe how the <em>surveillance pyramid</em> changes — and how missed sub-patent infections sustain transmission.
+</div>
+
+<div class="layout">
+
+<!-- LEFT CONTROLS -->
+<div class="ctrl-col">
+
+  <!-- Test selector -->
+  <div class="panel">
+    <div class="panel-title">Diagnostic Test</div>
+    <div class="panel-body">
+      <div class="test-grid">
+        <button class="test-btn active" id="btn-rdt"   onclick="selectTest('rdt')">
+          <span><strong>RDT</strong> — Rapid Diagnostic Test<br><span style="font-size:11px;font-style:italic;color:inherit;opacity:0.75">HRP2 antigen detection</span></span>
+          <span class="test-tag">$0.50</span>
+        </button>
+        <button class="test-btn" id="btn-micro" onclick="selectTest('micro')">
+          <span><strong>Microscopy</strong> — Thick blood film<br><span style="font-size:11px;font-style:italic;color:inherit;opacity:0.75">Expert reader required</span></span>
+          <span class="test-tag">$1.50</span>
+        </button>
+        <button class="test-btn" id="btn-pcr"   onclick="selectTest('pcr')">
+          <span><strong>PCR</strong> — Nested/qPCR<br><span style="font-size:11px;font-style:italic;color:inherit;opacity:0.75">Sub-patent detection</span></span>
+          <span class="test-tag">$12.00</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test characteristics -->
+  <div class="panel">
+    <div class="panel-title">Test Characteristics</div>
+    <div class="panel-body">
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Sensitivity (Se)
+            <span class="sub">P(T+ | Disease+)</span>
+          </span>
+          <span class="s-val" id="seVal">92%</span>
+        </div>
+        <input type="range" id="sensitivity" min="0.5" max="1.0" step="0.01" value="0.92" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Specificity (Sp)
+            <span class="sub">P(T− | Disease−)</span>
+          </span>
+          <span class="s-val" id="spVal">97%</span>
+        </div>
+        <input type="range" id="specificity" min="0.7" max="1.0" step="0.01" value="0.97" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Sub-patent detection
+            <span class="sub">Sensitivity for low-density infections</span>
+          </span>
+          <span class="s-val" id="subPatVal">10%</span>
+        </div>
+        <input type="range" id="subPat" min="0.0" max="1.0" step="0.01" value="0.10" oninput="onSlider()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Epidemiology -->
+  <div class="panel">
+    <div class="panel-title">Epidemiological Setting</div>
+    <div class="panel-body">
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">True prevalence
+            <span class="sub">Including sub-patent infections</span>
+          </span>
+          <span class="s-val" id="prevVal">10%</span>
+        </div>
+        <input type="range" id="prevalence" min="0.001" max="0.6" step="0.001" value="0.10" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Sub-patent fraction
+            <span class="sub">Of all true infections</span>
+          </span>
+          <span class="s-val" id="subFracVal">30%</span>
+        </div>
+        <input type="range" id="subFrac" min="0.0" max="0.8" step="0.01" value="0.30" oninput="onSlider()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Screening strategy -->
+  <div class="panel">
+    <div class="panel-title">Screening Strategy</div>
+    <div class="panel-body">
+      <div class="strat-grid">
+        <button class="strat-btn on" id="strat-satt" onclick="selectStrat('satt')">Screen &amp;<br>Treat</button>
+        <button class="strat-btn" id="strat-msat"    onclick="selectStrat('msat')">Mass Screen<br>+ACT</button>
+        <button class="strat-btn" id="strat-mda"     onclick="selectStrat('mda')">Mass Drug<br>Admin.</button>
+        <button class="strat-btn" id="strat-passive" onclick="selectStrat('passive')">Passive<br>Detect.</button>
+      </div>
+      <div style="margin-top:10px;" class="s-group">
+        <div class="s-row">
+          <span class="s-label">Population coverage
+            <span class="sub">Fraction screened/treated</span>
+          </span>
+          <span class="s-val" id="covVal">80%</span>
+        </div>
+        <input type="range" id="coverage" min="0.1" max="1.0" step="0.01" value="0.80" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Cost per treatment (ACT)
+            <span class="sub">USD</span>
+          </span>
+          <span class="s-val" id="actCostVal">$2.5</span>
+        </div>
+        <input type="range" id="actCost" min="0.5" max="10.0" step="0.5" value="2.5" oninput="onSlider()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="panel">
+    <div class="panel-title">Operating Metrics</div>
+    <div class="panel-body">
+      <div class="metrics-grid">
+        <div class="metric"><div class="m-label">PPV</div><div class="m-value blue" id="mPPV">—</div><div class="m-sub">pos. pred. value</div></div>
+        <div class="metric"><div class="m-label">NPV</div><div class="m-value green" id="mNPV">—</div><div class="m-sub">neg. pred. value</div></div>
+        <div class="metric"><div class="m-label">Missed cases</div><div class="m-value red" id="mMissed">—</div><div class="m-sub">per 10,000</div></div>
+        <div class="metric"><div class="m-label">False treats</div><div class="m-value amber" id="mFalse">—</div><div class="m-sub">per 10,000</div></div>
+        <div class="metric"><div class="m-label">NNS</div><div class="m-value blue" id="mNNS">—</div><div class="m-sub">need to screen</div></div>
+        <div class="metric"><div class="m-label">Total cost</div><div class="m-value amber" id="mCost">—</div><div class="m-sub">per 10,000 pop.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cost breakdown -->
+  <div class="panel">
+    <div class="panel-title">Programme Cost Breakdown</div>
+    <div class="panel-body">
+      <div class="cost-readout" id="costReadout">
+        <div class="cline"><span>Testing</span><span class="cv" id="cTest">—</span></div>
+        <div class="cline"><span>True-positive treatment</span><span class="cv" id="cTP">—</span></div>
+        <div class="cline"><span>False-positive treatment</span><span class="cv" id="cFP">—</span></div>
+        <div class="cost-total"><span>Total</span><span class="cv" id="cTotal">—</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT CHARTS -->
+<div class="charts-col">
+
+  <!-- Confusion matrix -->
+  <div class="chart-block">
+    <div class="chart-hd">
+      <div class="chart-title">Confusion Matrix</div>
+      <div class="chart-fig">Fig. I · N = 10,000</div>
+    </div>
+    <div class="conf-label-row">
+      <div class="conf-label-cell" style="flex:0 0 80px"></div>
+      <div class="conf-label-cell">Test Positive</div>
+      <div class="conf-label-cell">Test Negative</div>
+    </div>
+    <div style="display:flex;gap:3px;">
+      <div style="display:flex;flex-direction:column;gap:3px;width:80px;flex-shrink:0;">
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);border:1px solid var(--rule);padding:4px;background:var(--paper2)">Disease +</div>
+        <div style="flex:1;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);border:1px solid var(--rule);padding:4px;background:var(--paper2)">Disease −</div>
+      </div>
+      <div class="conf-matrix" style="flex:1;">
+        <div class="conf-cell conf-tp">
+          <div class="cc-label">True Positive</div>
+          <div class="cc-val" id="cmTP">—</div>
+          <div class="cc-sub">Detected &amp; treated</div>
+        </div>
+        <div class="conf-cell conf-fn">
+          <div class="cc-label">False Negative</div>
+          <div class="cc-val" id="cmFN">—</div>
+          <div class="cc-sub">Missed — reservoir</div>
+        </div>
+        <div class="conf-cell conf-fp">
+          <div class="cc-label">False Positive</div>
+          <div class="cc-val" id="cmFP">—</div>
+          <div class="cc-sub">Unnecessary Rx</div>
+        </div>
+        <div class="conf-cell conf-tn">
+          <div class="cc-label">True Negative</div>
+          <div class="cc-val" id="cmTN">—</div>
+          <div class="cc-sub">Correctly cleared</div>
+        </div>
+      </div>
+    </div>
+    <div class="chart-foot" id="confFoot">Adjust prevalence and test characteristics to observe how the cell counts shift.</div>
+  </div>
+
+  <!-- PPV/NPV vs prevalence sweep -->
+  <div class="chart-block">
+    <div class="chart-hd">
+      <div class="chart-title">PPV &amp; NPV across Prevalence</div>
+      <div class="chart-fig">Fig. II · Bayesian sweep</div>
+    </div>
+    <canvas id="bayesCanvas"></canvas>
+    <div class="chart-foot" id="bayesFoot">
+      The vertical line marks the current prevalence. PPV collapses at low prevalence even with high sensitivity — the core Bayesian insight.
+    </div>
+  </div>
+
+  <!-- ROC + missed cases vs prevalence -->
+  <div class="two-col">
+    <div class="chart-block">
+      <div class="chart-hd">
+        <div class="chart-title">Test Comparison — ROC</div>
+        <div class="chart-fig">Fig. III</div>
+      </div>
+      <div class="chart-wrap" style="height:210px;">
+        <canvas id="rocChart"></canvas>
+      </div>
+      <div class="chart-foot">Each test's operating point on the ROC plane. PCR dominates; microscopy and RDT trade sensitivity for cost.</div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-hd">
+        <div class="chart-title">Missed Cases vs Prevalence</div>
+        <div class="chart-fig">Fig. IV</div>
+      </div>
+      <div class="chart-wrap" style="height:210px;">
+        <canvas id="missedChart"></canvas>
+      </div>
+      <div class="chart-foot" id="missedFoot">Missed infections per 10,000 screened. Sub-patent reservoir is invisible to RDT and microscopy.</div>
+    </div>
+  </div>
+
+  <!-- Surveillance pyramid -->
+  <div class="chart-block">
+    <div class="chart-hd">
+      <div class="chart-title">Surveillance Pyramid &amp; Transmission Reservoir</div>
+      <div class="chart-fig">Fig. V</div>
+    </div>
+    <div class="chart-wrap" style="height:250px;">
+      <canvas id="pyramidChart"></canvas>
+    </div>
+    <div class="chart-foot" id="pyramidFoot">
+      Stacked bar showing the fate of all true infections under the current screening strategy. Missed sub-patent infections sustain onward transmission.
+    </div>
+  </div>
+
+  <!-- Interpretation -->
+  <div class="interp-panel">
+    <div class="interp-title">Field Interpretation</div>
+    <div class="interp-body" id="interpText">Adjust parameters to generate interpretation.</div>
+  </div>
+
+  <!-- Equations -->
+  <div class="eq-box">
+    <h3>Bayesian Diagnostic Equations</h3>
+    <div><span class="eq">PPV</span> = Se·P / [Se·P + (1−Sp)·(1−P)]</div>
+    <div><span class="eq">NPV</span> = Sp·(1−P) / [Sp·(1−P) + (1−Se)·P]</div>
+    <div><span class="eq">TP</span> = N·P·[Se_patent·(1−f_sub) + Se_sub·f_sub]</div>
+    <div><span class="eq">FN</span> = N·P − TP &nbsp;&nbsp;&nbsp;<span class="eq">LR+</span> = Se/(1−Sp)</div>
+    <div style="color:var(--ink4);font-size:9px;margin-top:4px">P=prevalence · f_sub=sub-patent fraction · Se_sub=sub-patent sensitivity</div>
+  </div>
+
+  <!-- Footer -->
+  <div class="pg-footer">
+    <div>Diagnostic Lab · Malaria Screening Strategy Simulator<br>Bayesian test performance · WHO diagnostic guidelines</div>
+    <div style="text-align:right">RDT sensitivity data: WHO Malaria Report 2023<br>Sub-patent prevalence: Okell et al. (2012) Nature Comms</div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST PRESETS
+// ─────────────────────────────────────────────────────────────────────────────
+const TESTS = {
+  rdt:   { se: 0.92, sp: 0.97, subPat: 0.10, cost: 0.50,  label: 'RDT',        color: '#1a5c8a' },
+  micro: { se: 0.85, sp: 0.99, subPat: 0.05, cost: 1.50,  label: 'Microscopy', color: '#2d6b3a' },
+  pcr:   { se: 0.99, sp: 0.995,subPat: 0.90, cost: 12.00, label: 'PCR',        color: '#7a1f4a' },
+};
+
+// Strategy modifiers
+const STRATS = {
+  satt:    { label: 'Screen & Treat',   treatPositive: true,  treatAll: false },
+  msat:    { label: 'Mass Screen+ACT',  treatPositive: true,  treatAll: false },
+  mda:     { label: 'Mass Drug Admin.', treatPositive: false, treatAll: true  },
+  passive: { label: 'Passive Detection',treatPositive: true,  treatAll: false },
+};
+
+let currentTest  = 'rdt';
+let currentStrat = 'satt';
+let rocChartInst, missedChartInst, pyramidChartInst;
+
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size   = 10;
+Chart.defaults.color       = '#54565A';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CALCULATIONS
+// ─────────────────────────────────────────────────────────────────────────────
+function getParams() {
+  return {
+    se:       parseFloat(document.getElementById('sensitivity').value),
+    sp:       parseFloat(document.getElementById('specificity').value),
+    subPatSe: parseFloat(document.getElementById('subPat').value),
+    prev:     parseFloat(document.getElementById('prevalence').value),
+    subFrac:  parseFloat(document.getElementById('subFrac').value),
+    cov:      parseFloat(document.getElementById('coverage').value),
+    actCost:  parseFloat(document.getElementById('actCost').value),
+    testCost: TESTS[currentTest].cost,
+  };
+}
+
+function calcDiag(se, sp, subPatSe, prev, subFrac, N = 10000) {
+  // True positives split into patent (high-density) and sub-patent (low-density)
+  const patentFrac  = 1 - subFrac;
+  const nInfected   = N * prev;
+  const nPatent     = nInfected * patentFrac;
+  const nSubPatent  = nInfected * subFrac;
+  const nHealthy    = N * (1 - prev);
+
+  // TP = patent infections detected + sub-patent detected
+  const tpPatent    = nPatent   * se;
+  const tpSubPat    = nSubPatent * subPatSe;
+  const TP          = tpPatent + tpSubPat;
+  const FN          = nInfected - TP;
+  const FP          = nHealthy  * (1 - sp);
+  const TN          = nHealthy  - FP;
+
+  const PPV  = TP / (TP + FP) || 0;
+  const NPV  = TN / (TN + FN) || 0;
+  const LRp  = se / (1 - sp);
+  const NNS  = 1 / prev;
+
+  return { TP, FN, FP, TN, PPV, NPV, LRp, NNS, nInfected, nSubPatent, nPatent };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONFUSION MATRIX UPDATE
+// ─────────────────────────────────────────────────────────────────────────────
+function updateMatrix(d) {
+  document.getElementById('cmTP').textContent = Math.round(d.TP).toLocaleString();
+  document.getElementById('cmFN').textContent = Math.round(d.FN).toLocaleString();
+  document.getElementById('cmFP').textContent = Math.round(d.FP).toLocaleString();
+  document.getElementById('cmTN').textContent = Math.round(d.TN).toLocaleString();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// METRICS
+// ─────────────────────────────────────────────────────────────────────────────
+function updateMetrics(d, p) {
+  const { cov, actCost, testCost } = p;
+  const N = 10000;
+
+  const screened    = N * cov;
+  const testingCost = screened * testCost;
+  const tpTreated   = d.TP * cov;
+  const fpTreated   = d.FP * cov;
+  const tpRxCost    = tpTreated  * actCost;
+  const fpRxCost    = fpTreated  * actCost;
+  const totalCost   = testingCost + tpRxCost + fpRxCost;
+
+  // NNS = number needed to screen to find one treatable case
+  const NNS_val = d.TP > 0 ? (screened / tpTreated).toFixed(1) : '∞';
+
+  document.getElementById('mPPV').textContent    = (d.PPV*100).toFixed(1)+'%';
+  document.getElementById('mNPV').textContent    = (d.NPV*100).toFixed(1)+'%';
+  document.getElementById('mMissed').textContent = Math.round(d.FN);
+  document.getElementById('mFalse').textContent  = Math.round(d.FP);
+  document.getElementById('mNNS').textContent    = NNS_val;
+  document.getElementById('mCost').textContent   = '$'+Math.round(totalCost).toLocaleString();
+
+  // Colour coding
+  const ppvEl = document.getElementById('mPPV');
+  ppvEl.className = 'm-value ' + (d.PPV > 0.7 ? 'green' : d.PPV > 0.4 ? 'amber' : 'red');
+  const missEl = document.getElementById('mMissed');
+  missEl.className = 'm-value ' + (d.FN > 500 ? 'red' : d.FN > 100 ? 'amber' : 'green');
+
+  document.getElementById('cTest').textContent  = '$'+Math.round(testingCost).toLocaleString();
+  document.getElementById('cTP').textContent    = '$'+Math.round(tpRxCost).toLocaleString();
+  document.getElementById('cFP').textContent    = '$'+Math.round(fpRxCost).toLocaleString();
+  document.getElementById('cTotal').textContent = '$'+Math.round(totalCost).toLocaleString();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BAYESIAN SWEEP CANVAS
+// ─────────────────────────────────────────────────────────────────────────────
+function drawBayesSweep(se, sp, currentPrev) {
+  const canvas = document.getElementById('bayesCanvas');
+  const ctx    = canvas.getContext('2d');
+  const DPR    = window.devicePixelRatio || 1;
+  const W      = canvas.offsetWidth;
+  const H      = canvas.offsetHeight || 220;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  ctx.scale(DPR, DPR);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  const PAD = { t:16, r:20, b:36, l:48 };
+  const cW  = W - PAD.l - PAD.r;
+  const cH  = H - PAD.t - PAD.b;
+  const N   = 300;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(140,109,44,0.15)'; ctx.lineWidth = 0.5;
+  [0,0.25,0.5,0.75,1].forEach(f => {
+    const y = PAD.t + cH*(1-f);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+cW,y); ctx.stroke();
+    const x = PAD.l + f*cW;
+    ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+cH); ctx.stroke();
+  });
+
+  function ppv(p){ return se*p / (se*p + (1-sp)*(1-p)) || 0; }
+  function npv(p){ return sp*(1-p) / (sp*(1-p) + (1-se)*p) || 0; }
+
+  // PPV curve
+  ctx.strokeStyle = '#1a5c8a'; ctx.lineWidth = 2; ctx.setLineDash([]);
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){
+    const p = i/N * 0.6;
+    const x = PAD.l + (p/0.6)*cW;
+    const y = PAD.t + cH*(1-ppv(p));
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // NPV curve
+  ctx.strokeStyle = '#2d6b3a'; ctx.lineWidth = 2; ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  for(let i=0;i<=N;i++){
+    const p = i/N * 0.6;
+    const x = PAD.l + (p/0.6)*cW;
+    const y = PAD.t + cH*(1-npv(p));
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Current prevalence line
+  const cx = PAD.l + (currentPrev/0.6)*cW;
+  ctx.strokeStyle = '#9c3a00'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx, PAD.t); ctx.lineTo(cx, PAD.t+cH); ctx.stroke();
+
+  // Dots at intersection
+  const cy_ppv = PAD.t + cH*(1-ppv(currentPrev));
+  const cy_npv = PAD.t + cH*(1-npv(currentPrev));
+  [[cy_ppv,'#1a5c8a'],[cy_npv,'#2d6b3a']].forEach(([cy,col]) => {
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2); ctx.fill();
+  });
+
+  // Axis labels
+  ctx.fillStyle = '#54565A'; ctx.font = '9px IBM Plex Mono, monospace';
+  ctx.textAlign = 'right';
+  [0,0.25,0.5,0.75,1].forEach(f => {
+    ctx.fillText((f*100).toFixed(0)+'%', PAD.l-4, PAD.t+cH*(1-f)+3);
+  });
+  ctx.textAlign = 'center';
+  [0,0.1,0.2,0.3,0.4,0.5,0.6].forEach(f => {
+    ctx.fillText((f*100).toFixed(0)+'%', PAD.l+(f/0.6)*cW, PAD.t+cH+14);
+  });
+
+  // Axis borders
+  ctx.strokeStyle = 'rgba(140,109,44,0.25)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD.l,PAD.t); ctx.lineTo(PAD.l,PAD.t+cH); ctx.lineTo(PAD.l+cW,PAD.t+cH);
+  ctx.stroke();
+
+  // Legend
+  ctx.font = '10px IBM Plex Mono, monospace'; ctx.textAlign = 'left';
+  [[14,'#1a5c8a','PPV'],[24,'#2d6b3a','NPV']].forEach(([dy,col,lbl]) => {
+    ctx.fillStyle = col;
+    ctx.fillRect(PAD.l+4, PAD.t+dy-8, 16, 2);
+    ctx.fillText(lbl, PAD.l+24, PAD.t+dy);
+  });
+
+  // Y label
+  ctx.save(); ctx.translate(11, PAD.t+cH/2); ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center'; ctx.fillStyle='#9c844f';
+  ctx.fillText('Predictive Value', 0, 0);
+  ctx.restore();
+
+  ctx.textAlign='center'; ctx.fillText('Prevalence', PAD.l+cW/2, H-4);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ROC CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildROC() {
+  if (rocChartInst) rocChartInst.destroy();
+  const points = Object.entries(TESTS).map(([k,t]) => ({
+    label: t.label,
+    data: [{ x: 1-t.sp, y: t.se }],
+    backgroundColor: t.color,
+    pointRadius: 9,
+    pointStyle: 'circle',
+  }));
+
+  // Random chance diagonal
+  points.unshift({
+    label: 'Chance',
+    data: [{x:0,y:0},{x:1,y:1}],
+    borderColor: '#c9bda0',
+    borderDash: [4,3],
+    borderWidth: 1,
+    pointRadius: 0,
+    type: 'line',
+    fill: false,
+  });
+
+  rocChartInst = new Chart(document.getElementById('rocChart'), {
+    type: 'scatter',
+    data: { datasets: points },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ labels:{ font:{family:"'Nunito Sans',sans-serif",size:11,style:'italic'}, color:'#54565A', usePointStyle:true }},
+        tooltip:{ backgroundColor:'#f4efe4', borderColor:'#c9bda0', borderWidth:1,
+          titleColor:'#160f02', bodyColor:'#6b5530', padding:8,
+          callbacks:{ label: ctx => ` Se=${(ctx.parsed.y*100).toFixed(0)}%  1-Sp=${(ctx.parsed.x*100).toFixed(0)}%` }
+        },
+      },
+      scales:{
+        x:{ min:0, max:0.5, title:{display:true,text:'1 − Specificity (FPR)',color:'#54565A'},
+            grid:{color:'rgba(140,109,44,0.15)'}, border:{color:'rgba(140,109,44,0.25)'}, ticks:{color:'#54565A',callback:v=>(v*100).toFixed(0)+'%'}},
+        y:{ min:0.5, max:1.0, title:{display:true,text:'Sensitivity (TPR)',color:'#54565A'},
+            grid:{color:'rgba(140,109,44,0.15)'}, border:{color:'rgba(140,109,44,0.25)'}, ticks:{color:'#54565A',callback:v=>(v*100).toFixed(0)+'%'}},
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MISSED CASES CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildMissedChart(subFrac) {
+  if (missedChartInst) missedChartInst.destroy();
+  const prevRange = Array.from({length:60},(_,i)=>(i+1)/100);
+  const N = 10000;
+
+  const datasets = Object.entries(TESTS).map(([k,t]) => ({
+    label: t.label,
+    data: prevRange.map(p => {
+      const inf = N*p;
+      const tp  = inf*(1-subFrac)*t.se + inf*subFrac*t.subPat;
+      return Math.round(inf - tp);
+    }),
+    borderColor: t.color,
+    borderWidth: 2,
+    pointRadius: 0,
+    fill: false,
+    tension: 0.3,
+  }));
+
+  missedChartInst = new Chart(document.getElementById('missedChart'), {
+    type:'line',
+    data:{ labels:prevRange.map(p=>(p*100).toFixed(0)+'%'), datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ labels:{font:{family:"'Nunito Sans',sans-serif",size:11,style:'italic'},color:'#54565A',usePointStyle:true}},
+        tooltip:{ backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8 },
+      },
+      scales:{
+        x:{ title:{display:true,text:'Prevalence',color:'#54565A'},
+            grid:{color:'rgba(140,109,44,0.15)'},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:'#54565A',maxTicksLimit:7}},
+        y:{ title:{display:true,text:'Missed per 10,000',color:'#54565A'},
+            grid:{color:'rgba(140,109,44,0.15)'},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:'#54565A'},min:0},
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SURVEILLANCE PYRAMID CHART
+// ─────────────────────────────────────────────────────────────────────────────
+function buildPyramidChart(d, p) {
+  if (pyramidChartInst) pyramidChartInst.destroy();
+  const { cov } = p;
+  const N = 10000;
+
+  // Categories of outcomes for infected persons
+  const detected_patent   = Math.round(d.TP * (1-p.subFrac/1) * cov);
+  const detected_subpat   = Math.round(d.TP * (p.subFrac) * cov * parseFloat(document.getElementById('subPat').value));
+  const missed_patent     = Math.round(d.nPatent - d.TP*(1-p.subFrac));
+  const missed_subpat     = Math.round(d.nSubPatent * (1 - parseFloat(document.getElementById('subPat').value)));
+  const fp_treated        = Math.round(d.FP * cov);
+
+  pyramidChartInst = new Chart(document.getElementById('pyramidChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Programme outcomes (all infections + false positives)'],
+      datasets: [
+        { label:'Patent detected & treated', data:[Math.round(d.TP*(1-p.subFrac))], backgroundColor:'rgba(26,92,138,0.8)', borderColor:'#1a5c8a', borderWidth:1 },
+        { label:'Sub-patent detected & treated', data:[Math.round(d.TP*p.subFrac)], backgroundColor:'rgba(26,92,138,0.35)', borderColor:'#1a5c8a', borderWidth:1 },
+        { label:'Patent missed (FN)', data:[Math.round(d.nPatent - d.TP*(1-p.subFrac))], backgroundColor:'rgba(139,26,26,0.8)', borderColor:'#8b1a1a', borderWidth:1 },
+        { label:'Sub-patent missed — reservoir', data:[Math.round(d.nSubPatent*(1-parseFloat(document.getElementById('subPat').value)))], backgroundColor:'rgba(139,26,26,0.35)', borderColor:'#8b1a1a', borderWidth:1, borderDash:[4,2] },
+        { label:'False positives treated', data:[Math.round(d.FP)], backgroundColor:'rgba(156,58,0,0.5)', borderColor:'#9c3a00', borderWidth:1 },
+      ],
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'bottom', labels:{font:{family:"'Nunito Sans',sans-serif",size:11,style:'italic'},color:'#54565A',usePointStyle:true,padding:12}},
+        tooltip:{backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8},
+      },
+      scales:{
+        x:{ stacked:true, title:{display:true,text:'Number of persons',color:'#54565A'},
+            grid:{color:'rgba(140,109,44,0.15)'},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:'#54565A'}},
+        y:{ stacked:true, grid:{display:false},border:{color:'rgba(140,109,44,0.25)'},ticks:{display:false}},
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERPRETATION
+// ─────────────────────────────────────────────────────────────────────────────
+function updateInterpretation(d, p) {
+  const { prev, se, sp, subFrac, subPatSe } = p;
+  const subPatMissed = Math.round(d.nSubPatent*(1-subPatSe));
+  const stratLabel   = STRATS[currentStrat].label;
+  const test         = TESTS[currentTest].label;
+  let txt = '';
+
+  // Core Bayesian message
+  if (d.PPV < 0.5) {
+    txt += `<span class="warn">Low PPV (${(d.PPV*100).toFixed(0)}%)</span>: at ${(prev*100).toFixed(1)}% prevalence, more than half of positive tests are false positives. The ${test}'s ${(sp*100).toFixed(0)}% specificity is insufficient at this prevalence — consider confirmatory testing or reserving treatment for higher-density settings. `;
+  } else if (d.PPV > 0.85) {
+    txt += `<span class="good">High PPV (${(d.PPV*100).toFixed(0)}%)</span>: the ${test} is operating reliably at ${(prev*100).toFixed(1)}% prevalence — most positive results reflect true infection. `;
+  } else {
+    txt += `Moderate PPV (${(d.PPV*100).toFixed(0)}%) at ${(prev*100).toFixed(1)}% prevalence. Acceptable for most field screening contexts with the ${test}. `;
+  }
+
+  // Sub-patent reservoir
+  if (subFrac > 0.2 && subPatSe < 0.3) {
+    txt += `<strong>Sub-patent reservoir risk:</strong> ${subPatMissed.toLocaleString()} sub-patent infections per 10,000 are invisible to this test. These individuals carry transmissible gametocytes, sustaining onward transmission even when the programme achieves high apparent coverage. Only PCR-based screening can meaningfully detect this reservoir. `;
+  }
+
+  // Strategy commentary
+  if (currentStrat === 'mda') {
+    txt += `<strong>Mass Drug Administration</strong> bypasses the diagnostic entirely — everyone receives treatment regardless of test result. This eliminates missed cases but incurs the full cost of treating uninfected individuals (${Math.round(d.TN).toLocaleString()} true negatives per 10,000). Justified only in very high prevalence settings or elimination campaigns. `;
+  } else if (currentStrat === 'passive') {
+    txt += `<strong>Passive detection</strong> depends on healthcare-seeking behaviour — typically captures only 20–40% of true cases in high-burden settings. Combined with ${(se*100).toFixed(0)}% sensitivity, the effective case detection fraction is substantially lower than the numbers shown here. `;
+  }
+
+  // NNS
+  const nnsFull = (1/prev).toFixed(0);
+  txt += `Number needed to screen: <strong>${nnsFull}</strong> persons per case detected at this prevalence.`;
+
+  document.getElementById('interpText').innerHTML = txt;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN UPDATE
+// ─────────────────────────────────────────────────────────────────────────────
+function update() {
+  const p = getParams();
+  const d = calcDiag(p.se, p.sp, p.subPatSe, p.prev, p.subFrac);
+
+  // Display updates
+  document.getElementById('seVal').textContent      = (p.se*100).toFixed(0)+'%';
+  document.getElementById('spVal').textContent      = (p.sp*100).toFixed(0)+'%';
+  document.getElementById('subPatVal').textContent  = (p.subPatSe*100).toFixed(0)+'%';
+  document.getElementById('prevVal').textContent    = (p.prev*100).toFixed(1)+'%';
+  document.getElementById('subFracVal').textContent = (p.subFrac*100).toFixed(0)+'%';
+  document.getElementById('covVal').textContent     = (p.cov*100).toFixed(0)+'%';
+  document.getElementById('actCostVal').textContent = '$'+p.actCost.toFixed(1);
+
+  updateMatrix(d);
+  updateMetrics(d, p);
+  drawBayesSweep(p.se, p.sp, p.prev);
+  buildMissedChart(p.subFrac);
+  buildPyramidChart(d, p);
+  updateInterpretation(d, p);
+
+  document.getElementById('confFoot').textContent =
+    `PPV=${(d.PPV*100).toFixed(0)}% · NPV=${(d.NPV*100).toFixed(0)}% · LR+=${d.LRp.toFixed(1)} · ${Math.round(d.FN)} infections missed of ${Math.round(d.nInfected)} total.`;
+}
+
+function onSlider() { update(); }
+
+function selectTest(t) {
+  currentTest = t;
+  ['rdt','micro','pcr'].forEach(k =>
+    document.getElementById('btn-'+k).classList.toggle('active', k===t));
+  const tp = TESTS[t];
+  document.getElementById('sensitivity').value = tp.se;
+  document.getElementById('specificity').value = tp.sp;
+  document.getElementById('subPat').value = tp.subPat;
+  update();
+}
+
+function selectStrat(s) {
+  currentStrat = s;
+  ['satt','msat','mda','passive'].forEach(k =>
+    document.getElementById('strat-'+k).classList.toggle('on', k===s));
+  update();
+}
+
+// Init
+buildROC();
+update();
+
+window.addEventListener('resize', () => {
+  if (window._rt2) clearTimeout(window._rt2);
+  window._rt2 = setTimeout(() => {
+    const p = getParams();
+    drawBayesSweep(p.se, p.sp, p.prev);
+  }, 100);
+});
+</script>
+</body>
+</html>

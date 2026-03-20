@@ -1,13 +1,24 @@
 ---
-title: "Malaria Control: Strategy, Economics, and Modeling"
-subtitle: "Public Health Undergraduate Lecture & Simulation Lab"
-format: 
+#title: "Outbreak! Investigation and Response"
+subtitle: "Interactive Simulation Module"
+author: "Department of Biology, Wake Forest University"
+format:
   revealjs:
-    theme: sky
+    theme: reveal-theme.scss
+    slide-number: true
     transition: slide
-    scrollable: true
-    self-contained: true
+    title-slide-attributes: 
+      background-color: black
+      color: white
+    logo: ../assets/logo-wide.png
+    footer: "Department of Biology · Wake Forest University"
+    progress: true
+    width: 1280
+    height: 720
+    embed-resources: true
 ---
+
+# Malaria Control: Strategy, Economics, and Modeling{.title-slide}
 
 ## The Global Burden
 * **The Toll:** ~249 million cases and 608,000 deaths annually (2022/23 data).
@@ -15,84 +26,3 @@ format:
 * **The Metric:** $PfPR_{2-10}$ (Plasmodium falciparum Parasite Rate in children aged 2–10).
     * This is our "gold standard" for measuring community transmission.
 
-[Image of malaria transmission cycle]
-
----
-
-## The Intervention "Toolbox"
-
-| Category | Tool | Mechanism |
-| :--- | :--- | :--- |
-| **Vector Control** | LLINs & IRS | Kills/Blocks the mosquito vector |
-| **Preventative** | Vaccines (R21/RTS,S) | Trains the immune system (pre-erythrocytic) |
-| **Case Management** | RDTs & ACTs | Diagnoses and clears parasites from humans |
-
----
-
-## Why Use Individual-Based Models (IBMs)?
-
-Standard models use differential equations for "compartments" (SIR models). But malaria is complex:
-* **Heterogeneity:** Not everyone gets bitten equally.
-* **Age-dependence:** Children suffer more severe disease than immune adults.
-* **History:** Previous infections change your current risk.
-
-> `malariasimulation` tracks **10,000+ individual agents**, each with their own age, net usage, and parasite load.
-
----
-
-## The Economic Reality: The "Budget Cap"
-
-In public health, we rarely ask "Does it work?" We ask **"Is it the best use of our limited dollars?"**
-
-**Your Challenge:**
-* **Total Population:** 10,000 people.
-* **Annual Budget:** $50,000.
-* **The Goal:** Achieve the lowest $PfPR_{2-10}$ possible without going bankrupt.
-
----
-
-## Group A: The Biological Arms Race
-### Vaccines vs. Drug Resistance
-
-**The Dilemma:** High vaccine coverage is great but expensive ($25/child). If you spend it all on vaccines, you might use "cheap" drugs that are failing due to resistance.
-
-* **Task:** Compare 80% Vaccine Coverage + Cheap (failing) Drugs vs. 20% Vaccine Coverage + Expensive (effective) Drugs.
-* **Critical Question:** Does the vaccine provide enough "herd protection" to ignore drug resistance?
-
-
-
----
-
-## Group B: The Vector Defense
-### Bed Nets (LLINs) vs. Indoor Spraying (IRS)
-
-**The Dilemma:** * **Nets:** Cheap ($4.50), last 3 years, but rely on human behavior.
-* **IRS:** Expensive ($7.00/person), lasts 6-12 months, but kills mosquitoes regardless of bed use.
-
-* **Task:** Run a "Universal Net" strategy vs. a "Targeted IRS" strategy.
-* **Critical Question:** What happens to the infection rate in Year 2 when the spray wears off?
-
----
-
-## Group C: "The Last Mile"
-### Case Management & CHWs
-
-**The Dilemma:** Prevention is key, but people are already sick. 
-* **Passive:** Wait for patients to walk 10km to a clinic (40% coverage).
-* **Active:** Hire Community Health Workers (CHWs) to find cases ($1,000/worker).
-
-* **Task:** Invest in 20 CHWs vs. investing that $20,000 into more bed nets.
-* **Critical Question:** Is it better to stop the *next* infection or clear the *current* one?
-
----
-
-## Instructions for the Lab
-
-1. Open the **Malaria Control Web Tool**.
-2. Identify your Group's assigned intervention sliders.
-3. **Phase 1:** Try to get $PfPR$ below 5% with **unlimited** budget.
-4. **Phase 2:** Apply the $50,000 constraint.
-5. **Phase 3:** Present your "Optimal Mix" to the class.
-
-> **Remember:** If your budget bar turns red, your strategy is disqualified!
-> 

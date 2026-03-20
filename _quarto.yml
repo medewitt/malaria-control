@@ -19,6 +19,14 @@ website:
         href: index.qmd
       - text: "Simulation Lab"
         href: docs/malaria-simulator.html
+      - text: "Vector Environment Lab"
+        href: docs/vectors.html
+      - text: "Pharmacology Lab"
+        href: docs/pharmacokinetics.html
+      - text: "Diagnostics Lab"
+        href: docs/diagnostics.html
+      - text: "Vaccine Design Lab"
+        href: docs/vaccine-design.html
       - text: "Lecture Presentation"
         href: presentation/overview.qmd
     page-footer:

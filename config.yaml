@@ -1,0 +1,43 @@
+site:
+  title: "Malaria Control Strategy Lab"
+  subtitle: >
+    Interactive simulation modules for malaria control
+    and intervention strategy evaluation
+  logo: "assets/logo-wide.png"
+
+modules:
+  - title: "Disease Dynamics Simulator"
+    href: "malaria-simulator.html"
+    description: >
+      Run a compartmental malaria model. Adjust transmission,
+      treatment, and vector control parameters to explore
+      how interventions change disease dynamics.
+    icon: "🦟"
+  - title: "Vector Environment Lab"
+    href: "vectors.html"
+    description: >
+      Manage larval breeding sites across a landscape.
+      Allocate resources for larviciding and environmental
+      management to reduce mosquito populations.
+    icon: "🌿"
+  - title: "Pharmacology Lab"
+    href: "pharmacokinetics.html"
+    description: >
+      Simulate ACT drug resistance and treatment failure.
+      Explore how partner drug combinations and dosing
+      regimens affect parasite clearance.
+    icon: "💊"
+  - title: "Diagnostic Lab"
+    href: "diagnostics.html"
+    description: >
+      Compare malaria screening strategies. Allocate a budget
+      across RDTs, microscopy, and PCR to optimize detection
+      sensitivity and specificity.
+    icon: "🔬"
+  - title: "Vaccine Design Lab"
+    href: "vaccine-design.html"
+    description: >
+      Design a malaria vaccine targeting different parasite
+      life stages. Simulate within-host immune responses
+      and evaluate efficacy trade-offs.
+    icon: "🧬"
