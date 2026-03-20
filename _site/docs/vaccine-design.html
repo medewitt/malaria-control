@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaxDesign Lab — Within-Host Malaria Vaccine Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --void:     #ffffff;
+  --base:     #ffffff;
+  --surface:  #f3f0e9;
+  --surface2: #CFD2D3;
+  --panel:    #f3f0e9;
+  --border:   rgba(140,109,44,0.25);
+  --border2:  rgba(140,109,44,0.35);
+  /* Biosignature palette — contrast-safe on white */
+  --cyan:     #0090aa;
+  --cyan2:    #007088;
+  --cyan3:    #005060;
+  --magenta:  #ff2d6e;
+  --magenta2: #cc1f52;
+  --amber:    #cc8800;
+  --amber2:   #996600;
+  --green:    #00895a;
+  --green2:   #006040;
+  --violet:   #b060ff;
+  --violet2:  #7a3acc;
+  --red:      #E5353C;
+  --text:     #000000;
+  --text2:    #54565A;
+  --text3:    #54565A;
+  --accent:   #8C6D2C;
+  /* Stage colours — contrast-safe on white */
+  --pre:      #0090aa;   /* pre-erythrocytic */
+  --blood:    #ff2d6e;   /* blood stage */
+  --tbv:      #00895a;   /* transmission blocking */
+  --multi:    #cc8800;   /* multi-antigen */
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+body {
+  background: #ffffff;
+  color: var(--text);
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 20px 60px;}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+.header{
+  padding:32px 0 20px;
+  border-bottom:1px solid var(--border);
+  margin-bottom:24px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+  flex-wrap:wrap;
+}
+
+.logo-area{}
+
+.eyebrow{
+  font-family:'Fira Code',monospace;
+  font-size:9px;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.eyebrow::before{
+  content:'';
+  width:20px;height:2px;
+  background:var(--accent);
+  display:inline-block;
+}
+
+h1{
+  font-family:Garamond,serif;
+  font-size:clamp(28px,5vw,52px);
+  font-weight:400;
+  letter-spacing:-0.5px;
+  line-height:1.1;
+  color:var(--text2);
+}
+
+h1 .accent{color:var(--accent);}
+
+.header-sub{
+  font-size:14px;
+  color:var(--text2);
+  margin-top:8px;
+  max-width:520px;
+  line-height:1.5;
+  font-style:italic;
+}
+
+/* Budget & time HUD */
+.hud{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:flex-start;
+}
+
+.hud-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:10px 16px;
+  min-width:140px;
+}
+
+.hud-label{
+  font-family:'Fira Code',monospace;
+  font-size:8px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:4px;
+}
+
+.hud-value{
+  font-family:'Fira Code',monospace;
+  font-size:22px;
+  font-weight:600;
+  line-height:1;
+}
+
+.hud-sub{font-size:10px;color:var(--text3);margin-top:2px;font-family:'Fira Code',monospace;}
+
+/* ── LIFECYCLE DIAGRAM ──────────────────────────────────────── */
+.lifecycle{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:24px;
+}
+
+@media(max-width:660px){.lifecycle{grid-template-columns:1fr;}}
+
+.stage-card{
+  border:2px solid var(--border);
+  background:var(--surface);
+  cursor:pointer;
+  position:relative;
+  overflow:hidden;
+  transition:border-color .2s, box-shadow .2s;
+}
+
+.stage-card.selected{box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.stage-card.selected.pre  {border-color:var(--pre);  box-shadow:0 2px 12px rgba(0,144,170,0.15);}
+.stage-card.selected.blood{border-color:var(--blood);box-shadow:0 2px 12px rgba(255,45,110,0.15);}
+.stage-card.selected.tbv  {border-color:var(--tbv);  box-shadow:0 2px 12px rgba(0,137,90,0.15);}
+
+/* Accent bar top */
+.stage-card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:3px;
+}
+.stage-card.pre::before  {background:var(--pre);}
+.stage-card.blood::before{background:var(--blood);}
+.stage-card.tbv::before  {background:var(--tbv);}
+
+.stage-header{
+  padding:14px 16px 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.stage-icon{
+  width:36px;height:36px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+
+.stage-card.pre   .stage-icon{background:rgba(0,144,170,0.1);border:1px solid var(--cyan3);}
+.stage-card.blood .stage-icon{background:rgba(255,45,110,0.1);border:1px solid var(--magenta2);}
+.stage-card.tbv   .stage-icon{background:rgba(0,137,90,0.08);border:1px solid var(--green2);}
+
+.stage-name{
+  font-family:'Nunito Sans',Arial,sans-serif;
+  font-size:16px;
+  font-weight:700;
+  line-height:1.1;
+}
+
+.stage-card.pre   .stage-name{color:var(--pre);}
+.stage-card.blood .stage-name{color:var(--blood);}
+.stage-card.tbv   .stage-name{color:var(--tbv);}
+
+.stage-antigen{
+  font-family:'Fira Code',monospace;
+  font-size:10px;
+  color:var(--text2);
+  margin-top:1px;
+}
+
+.stage-body{
+  padding:0 16px 14px;
+  font-size:12px;
+  color:var(--text2);
+  line-height:1.5;
+}
+
+.stage-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:10px;
+}
+
+.stat-cell{
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:5px 8px;
+}
+
+.stat-k{
+  font-family:'Fira Code',monospace;
+  font-size:8px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:2px;
+}
+
+.stat-v{
+  font-family:'Fira Code',monospace;
+  font-size:11px;
+  font-weight:500;
+}
+
+.stage-card.pre   .stat-v{color:var(--pre);}
+.stage-card.blood .stat-v{color:var(--blood);}
+.stage-card.tbv   .stat-v{color:var(--tbv);}
+
+/* Selected overlay */
+.check-overlay{
+  position:absolute;
+  top:8px;right:8px;
+  width:20px;height:20px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;
+  display:none;
+}
+
+.stage-card.selected .check-overlay{display:flex;}
+.stage-card.pre.selected   .check-overlay{background:var(--pre);color:var(--void);}
+.stage-card.blood.selected .check-overlay{background:var(--blood);color:white;}
+.stage-card.tbv.selected   .check-overlay{background:var(--tbv);color:var(--void);}
+
+/* ── DESIGN CONSOLE ─────────────────────────────────────────── */
+.console{
+  display:grid;
+  grid-template-columns:320px 1fr;
+  gap:20px;
+  align-items:start;
+}
+
+@media(max-width:860px){.console{grid-template-columns:1fr;}}
+
+/* Left panel */
+.design-panel{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  position:sticky;
+  top:16px;
+}
+
+.dp-section{
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+
+.dp-title{
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  padding:7px 14px;
+  font-family:'Fira Code',monospace;
+  font-size:8.5px;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  color:var(--accent);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.dp-title .blip{
+  width:5px;height:5px;
+  border-radius:50%;
+  background:var(--accent);
+  animation:blink 2s step-end infinite;
+}
+
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+.dp-body{padding:14px;}
+
+/* Design sliders */
+.ds-group{margin-bottom:14px;}
+.ds-group:last-child{margin-bottom:0;}
+
+.ds-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:3px;
+}
+
+.ds-label{
+  font-size:12px;
+  font-weight:500;
+  color:var(--text);
+}
+
+.ds-label .ds-sub{
+  font-size:10px;
+  color:var(--text3);
+  font-weight:300;
+  display:block;
+  font-style:italic;
+}
+
+.ds-val{
+  font-family:'Fira Code',monospace;
+  font-size:12px;
+  font-weight:500;
+  color:var(--accent);
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:1px 7px;
+  min-width:48px;
+  text-align:right;
+}
+
+input[type=range]{
+  -webkit-appearance:none;
+  width:100%;height:3px;
+  background:var(--border2);
+  outline:none;cursor:pointer;
+  margin-top:4px;
+}
+
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;
+  border-radius:50%;
+  background:var(--text);
+  border:2px solid #ffffff;
+  box-shadow:0 1px 3px rgba(0,0,0,0.25);
+  cursor:pointer;
+  transition:transform .1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3);}
+
+/* Dose selector */
+.dose-row{
+  display:flex;gap:6px;flex-wrap:wrap;
+  margin-top:4px;
+}
+
+.dose-btn{
+  width:36px;height:36px;
+  border:1px solid var(--border2);
+  background:var(--panel);
+  color:var(--text2);
+  font-family:'Fira Code',monospace;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .15s;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.dose-btn:hover{border-color:var(--cyan2);color:var(--cyan);}
+.dose-btn.active{background:var(--accent);color:#ffffff;border-color:var(--accent);}
+
+/* Adjuvant & formulation toggles */
+.toggle-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
+  margin-top:4px;
+}
+
+.toggle-btn{
+  padding:7px 8px;
+  border:1px solid var(--border2);
+  background:var(--panel);
+  color:var(--text2);
+  font-family:'Fira Code',monospace;
+  font-size:9.5px;
+  cursor:pointer;
+  transition:all .15s;
+  text-align:center;
+  line-height:1.3;
+}
+
+.toggle-btn:hover{border-color:var(--amber2);}
+.toggle-btn.on{background:rgba(255,179,0,0.12);border-color:var(--amber);color:var(--amber);}
+
+/* Cost breakdown */
+.cost-lines{
+  font-family:'Fira Code',monospace;
+  font-size:10px;
+  line-height:2;
+  color:var(--text3);
+}
+
+.cost-line{display:flex;justify-content:space-between;}
+.cost-line .cval{color:var(--amber);}
+.cost-total{
+  border-top:1px solid var(--border);
+  margin-top:6px;
+  padding-top:6px;
+  display:flex;justify-content:space-between;
+  font-weight:600;
+}
+
+.cost-total .cval{color:var(--amber);font-size:13px;}
+
+/* Run button */
+.run-btn{
+  width:100%;
+  padding:14px;
+  background:var(--accent);
+  color:#ffffff;
+  border:none;
+  font-family:'Nunito Sans',Arial,sans-serif;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+}
+
+.run-btn:hover{background:#624d17;}
+.run-btn:active{transform:scale(0.98);}
+
+/* ── RIGHT CHARTS ────────────────────────────────────────────── */
+.output-col{display:flex;flex-direction:column;gap:16px;}
+
+.chart-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  overflow:hidden;
+}
+
+.cp-header{
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  background:var(--surface2);
+}
+
+.cp-title{
+  font-family:Garamond,serif;
+  font-size:17px;
+  font-style:italic;
+  color:var(--text);
+}
+
+.cp-sub{
+  font-family:'Fira Code',monospace;
+  font-size:8px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--text3);
+}
+
+.chart-inner{padding:12px 14px;height:220px;position:relative;}
+
+.chart-footer-p{
+  padding:7px 16px 10px;
+  font-size:11.5px;
+  font-style:italic;
+  color:var(--text3);
+  border-top:1px solid var(--border);
+  line-height:1.4;
+}
+
+/* ── OUTCOME CARDS ──────────────────────────────────────────── */
+.outcome-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+
+@media(max-width:900px){.outcome-grid{grid-template-columns:repeat(2,1fr);}}
+
+.oc{
+  background:var(--surface);
+  border:1px solid var(--border);
+  padding:12px 14px;
+  position:relative;
+  overflow:hidden;
+}
+
+.oc::before{
+  content:'';
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:2px;
+}
+
+.oc.cyan::before  {background:var(--cyan);}
+.oc.magenta::before{background:var(--magenta);}
+.oc.amber::before {background:var(--amber);}
+.oc.green::before {background:var(--green);}
+
+.oc-label{
+  font-family:'Fira Code',monospace;
+  font-size:11px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--text3);
+  margin-bottom:5px;
+}
+
+.oc-value{
+  font-family:'Fira Code',monospace;
+  font-size:20px;
+  font-weight:600;
+  line-height:1;
+}
+
+.oc.cyan    .oc-value{color:var(--cyan);}
+.oc.magenta .oc-value{color:var(--magenta);}
+.oc.amber   .oc-value{color:var(--amber);}
+.oc.green   .oc-value{color:var(--green);}
+
+.oc-sub{font-size:10px;color:var(--text3);margin-top:3px;font-style:italic;}
+
+/* ── RESISTANCE TIMELINE ─────────────────────────────────────── */
+.res-timeline{
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+
+.rt-header{
+  padding:10px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--surface2);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.rt-title{
+  font-family:Garamond,serif;
+  font-size:17px;
+  letter-spacing:1px;
+  color:var(--text);
+}
+
+.rt-body{padding:14px 16px;}
+
+.rt-stage{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:12px;
+}
+
+.rt-stage:last-child{margin-bottom:0;}
+
+.rt-name{
+  font-family:'Fira Code',monospace;
+  font-size:10px;
+  width:90px;
+  flex-shrink:0;
+  text-transform:uppercase;
+  letter-spacing:1px;
+}
+
+.rt-bar-wrap{flex:1;height:20px;background:var(--panel);border:1px solid var(--border);position:relative;overflow:hidden;}
+
+.rt-bar{
+  height:100%;
+  position:absolute;
+  left:0;top:0;
+  transition:width .5s ease;
+  display:flex;align-items:center;justify-content:flex-end;
+  padding-right:6px;
+}
+
+.rt-bar-label{
+  font-family:'Fira Code',monospace;
+  font-size:9px;
+  color:var(--void);
+  font-weight:600;
+  white-space:nowrap;
+}
+
+.rt-year{
+  font-family:'Fira Code',monospace;
+  font-size:10px;
+  width:60px;
+  text-align:right;
+  flex-shrink:0;
+}
+
+/* ── INTERPRETATION ──────────────────────────────────────────── */
+.interp{
+  background:var(--surface);
+  border:1px solid var(--border);
+}
+
+.interp-hd{
+  padding:8px 14px;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+  font-family:'Fira Code',monospace;
+  font-size:8.5px;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+
+.interp-bd{
+  padding:14px 16px;
+  font-size:13.5px;
+  line-height:1.7;
+  color:var(--text2);
+}
+
+.interp-bd strong{color:var(--text);font-weight:600;}
+.interp-bd em{color:var(--accent);font-style:italic;}
+.interp-bd .warn{color:var(--amber);}
+.interp-bd .bad{color:var(--magenta);}
+.interp-bd .good{color:var(--green);}
+
+/* animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.chart-panel{animation:fadeUp .4s ease both;}
+.chart-panel:nth-child(2){animation-delay:.08s;}
+.chart-panel:nth-child(3){animation-delay:.16s;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-area">
+    <div class="eyebrow">Within-Host Immunology · Vaccine Design Console</div>
+    <h1>VAX<span class="accent">DESIGN</span> LAB</h1>
+    <div class="header-sub">Design a malaria vaccine by selecting lifecycle targets, dosing regimens, and adjuvant formulations. Observe within-host immunity dynamics and the evolution of antigenic resistance.</div>
+  </div>
+  <div class="hud">
+    <div class="hud-card">
+      <div class="hud-label">R&amp;D Budget</div>
+      <div class="hud-value" id="hudBudget" style="color:var(--amber)">$<span id="budgetLeft">500</span>M</div>
+      <div class="hud-sub">remaining / $500M</div>
+    </div>
+    <div class="hud-card">
+      <div class="hud-label">Spent</div>
+      <div class="hud-value" id="hudSpent" style="color:var(--text2)">$<span id="budgetSpent">0</span>M</div>
+      <div class="hud-sub">development cost</div>
+    </div>
+    <div class="hud-card">
+      <div class="hud-label">Sim Horizon</div>
+      <div class="hud-value" style="color:var(--cyan)">10 <span style="font-size:13px">yrs</span></div>
+      <div class="hud-sub">post-deployment</div>
+    </div>
+  </div>
+</div>
+
+<!-- LIFECYCLE TARGET SELECTOR -->
+<div style="margin-bottom:12px;">
+  <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;">
+    Step 1 — Select lifecycle targets (multi-select)
+  </div>
+  <div class="lifecycle">
+
+    <div class="stage-card pre" id="card-pre" onclick="toggleStage('pre')">
+      <div class="check-overlay" id="check-pre">✓</div>
+      <div class="stage-header">
+        <div class="stage-icon">🦟</div>
+        <div>
+          <div class="stage-name">Pre-Erythrocytic</div>
+          <div class="stage-antigen">CSP · TRAP · LSA-1</div>
+        </div>
+      </div>
+      <div class="stage-body">
+        Targets sporozoites and hepatocytes. Blocks infection before blood-stage parasitemia. Mechanism: anti-CSP antibodies intercept sporozoites in transit to liver.
+        <div class="stage-stats">
+          <div class="stat-cell"><div class="stat-k">Max efficacy</div><div class="stat-v">~75%</div></div>
+          <div class="stat-cell"><div class="stat-k">Resistance rate</div><div class="stat-v">t½≈2.5yr</div></div>
+          <div class="stat-cell"><div class="stat-k">Base cost</div><div class="stat-v">$80M</div></div>
+          <div class="stat-cell"><div class="stat-k">Dev. time</div><div class="stat-v">6 yr</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-card blood" id="card-blood" onclick="toggleStage('blood')">
+      <div class="check-overlay" id="check-blood">✓</div>
+      <div class="stage-header">
+        <div class="stage-icon">🩸</div>
+        <div>
+          <div class="stage-name">Blood Stage</div>
+          <div class="stage-antigen">AMA1 · MSP1 · RH5</div>
+        </div>
+      </div>
+      <div class="stage-body">
+        Targets merozoites and intraerythrocytic parasites. Reduces peak parasitemia and severe disease. High antigenic diversity — polymorphic escape common.
+        <div class="stage-stats">
+          <div class="stat-cell"><div class="stat-k">Max efficacy</div><div class="stat-v">~55%</div></div>
+          <div class="stat-cell"><div class="stat-k">Resistance rate</div><div class="stat-v">t½≈1.5yr</div></div>
+          <div class="stat-cell"><div class="stat-k">Base cost</div><div class="stat-v">$100M</div></div>
+          <div class="stat-cell"><div class="stat-k">Dev. time</div><div class="stat-v">8 yr</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-card tbv" id="card-tbv" onclick="toggleStage('tbv')">
+      <div class="check-overlay" id="check-tbv">✓</div>
+      <div class="stage-header">
+        <div class="stage-icon">🦠</div>
+        <div>
+          <div class="stage-name">Transmission Blocking</div>
+          <div class="stage-antigen">Pfs25 · Pfs230 · Pfs48/45</div>
+        </div>
+      </div>
+      <div class="stage-body">
+        Targets gametocytes and mosquito midgut stages. No direct individual benefit — acts altruistically at population level. Very slow resistance evolution.
+        <div class="stage-stats">
+          <div class="stat-cell"><div class="stat-k">Max efficacy</div><div class="stat-v">~90% TRA</div></div>
+          <div class="stat-cell"><div class="stat-k">Resistance rate</div><div class="stat-v">t½≈7yr</div></div>
+          <div class="stat-cell"><div class="stat-k">Base cost</div><div class="stat-v">$60M</div></div>
+          <div class="stat-cell"><div class="stat-k">Dev. time</div><div class="stat-v">7 yr</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DESIGN CONSOLE -->
+<div class="console">
+
+  <!-- LEFT: Design parameters -->
+  <div class="design-panel">
+
+    <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);">
+      Step 2 — Design parameters
+    </div>
+
+    <!-- Doses -->
+    <div class="dp-section">
+      <div class="dp-title"><div class="blip"></div>Dosing Regimen</div>
+      <div class="dp-body">
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">Number of doses
+              <span class="ds-sub">+$15M per additional dose</span>
+            </span>
+          </div>
+          <div class="dose-row" id="doseRow">
+            <button class="dose-btn" data-dose="1" onclick="setDose(1)">1</button>
+            <button class="dose-btn" data-dose="2" onclick="setDose(2)">2</button>
+            <button class="dose-btn active" data-dose="3" onclick="setDose(3)">3</button>
+            <button class="dose-btn" data-dose="4" onclick="setDose(4)">4</button>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">Dose interval (weeks)</span>
+            <span class="ds-val" id="intervalVal">4</span>
+          </div>
+          <input type="range" id="doseInterval" min="1" max="12" step="1" value="4">
+        </div>
+
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">Booster (months post-primary)
+              <span class="ds-sub">0 = no booster</span>
+            </span>
+            <span class="ds-val" id="boosterVal">0</span>
+          </div>
+          <input type="range" id="boosterMonth" min="0" max="18" step="1" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- Immunology -->
+    <div class="dp-section">
+      <div class="dp-title"><div class="blip"></div>Immunological Design</div>
+      <div class="dp-body">
+
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">Adjuvant potency
+              <span class="ds-sub">amplifies peak antibody titre</span>
+            </span>
+            <span class="ds-val" id="adjuvantVal">0.50</span>
+          </div>
+          <input type="range" id="adjuvant" min="0" max="1" step="0.05" value="0.5">
+        </div>
+
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">Antigen breadth
+              <span class="ds-sub">no. of variant alleles covered</span>
+            </span>
+            <span class="ds-val" id="breadthVal">1</span>
+          </div>
+          <input type="range" id="antigenBreadth" min="1" max="6" step="1" value="1">
+        </div>
+
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">Formulation
+              <span class="ds-sub">delivery vehicle</span>
+            </span>
+          </div>
+          <div class="toggle-grid" id="formulationGrid">
+            <button class="toggle-btn on" id="form-alum"   onclick="toggleForm('alum')"  >Alum<br><span style="font-size:8px">baseline</span></button>
+            <button class="toggle-btn"    id="form-as01b"  onclick="toggleForm('as01b')" >AS01B<br><span style="font-size:8px">+$30M, ×1.4</span></button>
+            <button class="toggle-btn"    id="form-vlp"    onclick="toggleForm('vlp')"   >VLP<br><span style="font-size:8px">+$50M, ×1.6</span></button>
+            <button class="toggle-btn"    id="form-mrna"   onclick="toggleForm('mrna')"  >mRNA<br><span style="font-size:8px">+$70M, ×1.8</span></button>
+          </div>
+        </div>
+
+        <div class="ds-group">
+          <div class="ds-row">
+            <span class="ds-label">VSG resistance modifier
+              <span class="ds-sub">1 = full susceptibility to escape</span>
+            </span>
+            <span class="ds-val" id="vsgVal">0.80</span>
+          </div>
+          <input type="range" id="vsgResist" min="0" max="1" step="0.05" value="0.8">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Cost breakdown -->
+    <div class="dp-section">
+      <div class="dp-title"><div class="blip"></div>Cost Breakdown</div>
+      <div class="dp-body">
+        <div class="cost-lines" id="costLines">
+          <div class="cost-line"><span>Stage targets</span><span class="cval" id="cStages">$0M</span></div>
+          <div class="cost-line"><span>Dosing regimen</span><span class="cval" id="cDoses">$0M</span></div>
+          <div class="cost-line"><span>Adjuvant / formulation</span><span class="cval" id="cForm">$0M</span></div>
+          <div class="cost-line"><span>Antigen breadth</span><span class="cval" id="cBreadth">$0M</span></div>
+          <div class="cost-line"><span>Booster programme</span><span class="cval" id="cBooster">$0M</span></div>
+          <div class="cost-total"><span>TOTAL R&amp;D</span><span class="cval" id="cTotal">$0M</span></div>
+        </div>
+      </div>
+    </div>
+
+    <button class="run-btn" onclick="runSim()">▶ DEPLOY VACCINE</button>
+
+  </div>
+
+  <!-- RIGHT: Outputs -->
+  <div class="output-col">
+
+    <!-- Outcome KPIs -->
+    <div class="outcome-grid">
+      <div class="oc cyan">
+        <div class="oc-label">Peak Ab Titre</div>
+        <div class="oc-value" id="ocTitre">—</div>
+        <div class="oc-sub">IgG arbitrary units</div>
+      </div>
+      <div class="oc magenta">
+        <div class="oc-label">Peak Parasitemia</div>
+        <div class="oc-value" id="ocPara">—</div>
+        <div class="oc-sub">% reduction vs control</div>
+      </div>
+      <div class="oc amber">
+        <div class="oc-label">Efficacy at Yr 5</div>
+        <div class="oc-value" id="ocEff5">—</div>
+        <div class="oc-sub">vaccine protected fraction</div>
+      </div>
+      <div class="oc green">
+        <div class="oc-label">Resistance t½</div>
+        <div class="oc-value" id="ocResT">—</div>
+        <div class="oc-sub">years to 50% escape allele</div>
+      </div>
+    </div>
+
+    <!-- Chart 1: Antibody + parasitemia -->
+    <div class="chart-panel">
+      <div class="cp-header">
+        <div class="cp-title">Antibody Titre &amp; Parasite Dynamics</div>
+        <div class="cp-sub">Within-host · Days 0–365</div>
+      </div>
+      <div class="chart-inner">
+        <canvas id="hostChart"></canvas>
+      </div>
+      <div class="chart-footer-p" id="hostFooter">Run a simulation to see within-host dynamics.</div>
+    </div>
+
+    <!-- Chart 2: Long-term efficacy decay -->
+    <div class="chart-panel">
+      <div class="cp-header">
+        <div class="cp-title">Vaccine Efficacy Decay &amp; Resistance Evolution</div>
+        <div class="cp-sub">Population level · Years 0–10</div>
+      </div>
+      <div class="chart-inner">
+        <canvas id="efficacyChart"></canvas>
+      </div>
+      <div class="chart-footer-p" id="efficacyFooter">Efficacy wanes due to antibody decay and rising resistance allele frequency.</div>
+    </div>
+
+    <!-- Resistance timeline -->
+    <div class="res-timeline">
+      <div class="rt-header">
+        <div class="rt-title">Resistance Evolution Timeline</div>
+        <div style="font-family:'Fira Code',monospace;font-size:8px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);">by target stage</div>
+      </div>
+      <div class="rt-body" id="resTimelineBody">
+        <div style="font-family:'Fira Code',monospace;font-size:11px;color:var(--text3);">Deploy a vaccine to see resistance projections.</div>
+      </div>
+    </div>
+
+    <!-- Interpretation -->
+    <div class="interp">
+      <div class="interp-hd">Mechanistic Interpretation</div>
+      <div class="interp-bd" id="interpText">
+        Select lifecycle targets and configure your vaccine design parameters, then press <em>Deploy Vaccine</em> to simulate within-host immunity kinetics and population-level resistance evolution.
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+const stages = { pre: false, blood: false, tbv: false };
+let currentDoses = 3;
+let currentForm  = 'alum';
+let hostChartInst, efficacyChartInst;
+
+// Stage biological parameters
+const STAGE_PARAMS = {
+  pre: {
+    baseCost:   80,
+    maxEff:     0.75,
+    waneRate:   0.003,
+    // Calibrated so t½(resistance) ≈ 2.5yr at default settings (vsg=0.8, breadth=2)
+    // Reflects slow CSP polymorphism in field — slow but visible within 10yr window
+    resistRate: 0.005395, // per day; multiply by 365 in sim (year dt units)
+    resistMult: 1.0,
+    color:      '#0090aa',
+    label:      'Pre-erythrocytic (CSP)',
+  },
+  blood: {
+    baseCost:   100,
+    maxEff:     0.55,
+    waneRate:   0.004,
+    // t½ ≈ 1.5yr at default — blood-stage antigens under intense immune selection
+    resistRate: 0.004087,
+    resistMult: 2.2,  // high polymorphism multiplier (AMA1 has >200 known alleles)
+    color:      '#ff2d6e',
+    label:      'Blood stage (AMA1/MSP1)',
+  },
+  tbv: {
+    baseCost:   60,
+    maxEff:     0.90,
+    waneRate:   0.002,
+    // t½ ≈ 7yr — selection acts in mosquito midgut, not under direct human immunity
+    resistRate: 0.007708,
+    resistMult: 0.25,
+    color:      '#00895a',
+    label:      'Transmission blocking (Pfs25)',
+  },
+};
+
+const FORM_PARAMS = {
+  alum:  { cost: 0,  mult: 1.0 },
+  as01b: { cost: 30, mult: 1.4 },
+  vlp:   { cost: 50, mult: 1.6 },
+  mrna:  { cost: 70, mult: 1.8 },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UI INTERACTIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function toggleStage(s) {
+  stages[s] = !stages[s];
+  document.getElementById('card-'+s).classList.toggle('selected', stages[s]);
+  document.getElementById('check-'+s).style.display = stages[s] ? 'flex' : 'none';
+  updateCosts();
+}
+
+function setDose(n) {
+  currentDoses = n;
+  document.querySelectorAll('.dose-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.dose) === n);
+  });
+  updateCosts();
+}
+
+function toggleForm(f) {
+  currentForm = f;
+  ['alum','as01b','vlp','mrna'].forEach(k => {
+    document.getElementById('form-'+k).classList.toggle('on', k === f);
+  });
+  updateCosts();
+}
+
+// Live slider display
+document.getElementById('doseInterval').addEventListener('input', function() {
+  document.getElementById('intervalVal').textContent = this.value;
+});
+document.getElementById('boosterMonth').addEventListener('input', function() {
+  document.getElementById('boosterVal').textContent = this.value;
+  updateCosts();
+});
+document.getElementById('adjuvant').addEventListener('input', function() {
+  document.getElementById('adjuvantVal').textContent = parseFloat(this.value).toFixed(2);
+});
+document.getElementById('antigenBreadth').addEventListener('input', function() {
+  document.getElementById('breadthVal').textContent = this.value;
+  updateCosts();
+});
+document.getElementById('vsgResist').addEventListener('input', function() {
+  document.getElementById('vsgVal').textContent = parseFloat(this.value).toFixed(2);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COST MODEL
+// ─────────────────────────────────────────────────────────────────────────────
+
+function computeCosts() {
+  const stageCost  = Object.entries(stages)
+    .filter(([,v]) => v)
+    .reduce((s,[k]) => s + STAGE_PARAMS[k].baseCost, 0);
+  const doseCost   = (currentDoses - 1) * 15;
+  const formCost   = FORM_PARAMS[currentForm].cost;
+  const breadth    = parseInt(document.getElementById('antigenBreadth').value);
+  const breadthCost = (breadth - 1) * 20;
+  const booster    = parseInt(document.getElementById('boosterMonth').value);
+  const boosterCost = booster > 0 ? 25 : 0;
+  const total      = stageCost + doseCost + formCost + breadthCost + boosterCost;
+  return { stageCost, doseCost, formCost, breadthCost, boosterCost, total };
+}
+
+function updateCosts() {
+  const c = computeCosts();
+  document.getElementById('cStages').textContent  = '$'+c.stageCost+'M';
+  document.getElementById('cDoses').textContent   = '$'+c.doseCost+'M';
+  document.getElementById('cForm').textContent    = '$'+c.formCost+'M';
+  document.getElementById('cBreadth').textContent = '$'+c.breadthCost+'M';
+  document.getElementById('cBooster').textContent = '$'+c.boosterCost+'M';
+  document.getElementById('cTotal').textContent   = '$'+c.total+'M';
+
+  const remaining = Math.max(0, 500 - c.total);
+  document.getElementById('budgetLeft').textContent  = remaining;
+  document.getElementById('budgetSpent').textContent = c.total;
+  document.getElementById('hudBudget').style.color   = c.total > 500 ? 'var(--magenta)' : 'var(--amber)';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WITHIN-HOST ODE MODEL
+// ─────────────────────────────────────────────────────────────────────────────
+// State: Ab (antibody titre), P (parasite density 0-1 relative)
+//
+// After each dose: Ab += dose_boost
+// dAb/dt = -delta_Ab * Ab            (antibody waning)
+// dP/dt  = r_P * P * (1 - P)         (logistic parasite growth)
+//          - kill * Ab / (Ab + K_half) * P   (antibody-mediated killing)
+//
+// The effective efficacy at time t for each selected stage:
+//   eff_s(t) = maxEff_s * (Ab(t)/Ab_peak) * breadth_factor * (1 - resist_s(t))
+
+function simulateWithinHost() {
+  const doses     = currentDoses;
+  const interval  = parseInt(document.getElementById('doseInterval').value) * 7; // days
+  const adjuvant  = parseFloat(document.getElementById('adjuvant').value);
+  const breadth   = parseInt(document.getElementById('antigenBreadth').value);
+  const booster   = parseInt(document.getElementById('boosterMonth').value) * 30;
+  const formMult  = FORM_PARAMS[currentForm].mult;
+
+  // Antibody params
+  const Ab_per_dose = 50 * (1 + adjuvant) * formMult; // titre units per dose
+  const delta_Ab    = 0.004 + (1 - adjuvant) * 0.003; // waning rate/day
+
+  // Parasite params
+  const r_P     = 0.08;    // parasite growth rate
+  const kill    = 0.35;    // max killing rate
+  const K_half  = Ab_per_dose * 0.3; // half-saturation
+
+  const T    = 365;
+  const dt   = 0.5;
+  const steps = T / dt;
+
+  let Ab = 0, P = 0.8; // start with some infection challenge
+  const t_out = [], Ab_out = [], P_out = [];
+
+  // Build dose schedule
+  const doseDays = [];
+  for (let d = 0; d < doses; d++) doseDays.push(d * interval);
+  if (booster > 0) doseDays.push(booster);
+
+  // Track Ab peak for normalisation
+  let Ab_peak = 0;
+
+  for (let i = 0; i < steps; i++) {
+    const t = i * dt;
+
+    // Administer dose if scheduled
+    doseDays.forEach(dd => {
+      if (t >= dd && t < dd + dt) Ab += Ab_per_dose;
+    });
+
+    Ab_peak = Math.max(Ab_peak, Ab);
+
+    const dAb = -delta_Ab * Ab;
+    const eff_killing = kill * Ab / (Ab + K_half);
+    const dP  = r_P * P * (1 - P) - eff_killing * P;
+
+    Ab = Math.max(0, Ab + dAb * dt);
+    P  = Math.max(0, Math.min(1, P  + dP  * dt));
+
+    if (i % 4 === 0) {
+      t_out.push(t);
+      Ab_out.push(Ab);
+      P_out.push(P);
+    }
+  }
+
+  return { t: t_out, Ab: Ab_out, P: P_out, Ab_peak, Ab_per_dose, delta_Ab };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LONG-TERM EFFICACY + RESISTANCE MODEL (population level, 10 years)
+// ─────────────────────────────────────────────────────────────────────────────
+// Antibody titre decays as Ab(t) = Ab_peak * exp(-delta * t)
+// Vaccine efficacy: VE(t) = VE0 * (Ab(t)/Ab_peak)^0.5 * (1 - resist(t))
+// Resistance allele: dp/dt = vsg_mod * resist_rate * coverage * p * (1-p)
+//   (replicator equation — resistance selected proportionally to vaccine coverage)
+
+function simulateLongTerm(hostResult) {
+  const { Ab_peak, delta_Ab } = hostResult;
+  const vsgMod = parseFloat(document.getElementById('vsgResist').value);
+  const breadth = parseInt(document.getElementById('antigenBreadth').value);
+  const breadthFactor = Math.min(1, 0.4 + breadth * 0.1);
+  const T_years = 10;
+  const dt = 1 / 365; // 1-day steps in year units
+  const steps = T_years / dt;
+
+  // For each selected stage, track VE and resistance separately
+  const selectedStages = Object.entries(stages).filter(([,v]) => v).map(([k]) => k);
+
+  // Initialise per-stage resistance allele frequency
+  const resist = {};
+  const resistRate = {};
+  selectedStages.forEach(s => {
+    resist[s] = 0.01;  // standing variation in endemic settings
+    resistRate[s] = STAGE_PARAMS[s].resistRate * STAGE_PARAMS[s].resistMult * vsgMod / breadthFactor;
+  });
+
+  const t_yr  = [];
+  const ve_combined = [];
+  const resist_out  = {};
+  selectedStages.forEach(s => resist_out[s] = []);
+
+  // Ab(t) at year t: peak titre normalised, decayed
+  // Convert delta_Ab from per-day to per-year
+  const delta_yr = delta_Ab * 365;
+
+  // Coverage assumption: 70% population coverage (drives selection)
+  const coverage = 0.7;
+
+  for (let i = 0; i < steps; i++) {
+    const t = i * dt;
+
+    // Antibody fraction remaining
+    const Ab_frac = Math.exp(-delta_yr * t);
+
+    // Per-stage VE and resistance evolution
+    let combined_eff = 1;
+    selectedStages.forEach(s => {
+      const sp = STAGE_PARAMS[s];
+      // VE = maxEff * sqrt(Ab_frac) * (1 - resist)
+      const ve_s = sp.maxEff * Math.pow(Math.max(0, Ab_frac), 0.5) * (1 - resist[s]);
+      combined_eff *= (1 - ve_s); // independent multiplicative protection
+
+      // Resistance replicator (replicator equation)
+      // resistRate is per-day; dt is in year units → multiply by 365 to match units
+      const dp = resistRate[s] * 365 * coverage * resist[s] * (1 - resist[s]);
+      resist[s] = Math.min(1, Math.max(0, resist[s] + dp * dt));
+    });
+
+    const ve_total = selectedStages.length > 0 ? 1 - combined_eff : 0;
+
+    if (i % 30 === 0) {
+      t_yr.push(t);
+      ve_combined.push(ve_total);
+      selectedStages.forEach(s => resist_out[s].push(resist[s]));
+    }
+  }
+
+  return { t: t_yr, ve: ve_combined, resist: resist_out, selectedStages };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER CHARTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+Chart.defaults.font.family = "'Fira Code', monospace";
+Chart.defaults.font.size   = 10;
+Chart.defaults.color       = '#54565A';
+
+const GRID_COLOR = 'rgba(140,109,44,0.15)';
+
+function buildHostChart(host) {
+  if (hostChartInst) hostChartInst.destroy();
+  hostChartInst = new Chart(document.getElementById('hostChart'), {
+    type: 'line',
+    data: {
+      labels: host.t.map(t => t.toFixed(0)),
+      datasets: [
+        {
+          label: 'Antibody titre (AU)',
+          data: host.Ab,
+          borderColor: '#0090aa',
+          backgroundColor: 'rgba(0,212,255,0.06)',
+          fill: true, borderWidth: 2, pointRadius: 0, tension: 0.3,
+          yAxisID: 'yAb',
+        },
+        {
+          label: 'Parasite density (relative)',
+          data: host.P,
+          borderColor: '#ff2d6e',
+          backgroundColor: 'rgba(255,45,110,0.06)',
+          fill: true, borderWidth: 2.5, pointRadius: 0, tension: 0.3,
+          yAxisID: 'yP',
+        },
+      ],
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{
+          labels:{
+            font:{family:"'Nunito Sans',sans-serif",size:12},
+            color:'#54565A', usePointStyle:true,
+          },
+        },
+        tooltip:{
+          backgroundColor:'#ffffff', borderColor:'rgba(140,109,44,0.25)', borderWidth:1,
+          titleColor:'#000000', bodyColor:'#54565A', padding:10,
+        },
+      },
+      scales:{
+        x:{
+          title:{display:true,text:'Days',color:'#54565A'},
+          grid:{color:GRID_COLOR}, border:{color:'rgba(140,109,44,0.25)'},
+          ticks:{maxTicksLimit:8,color:'#54565A'},
+        },
+        yAb:{
+          type:'linear',position:'left',
+          title:{display:true,text:'Ab titre (AU)',color:'#0090aa'},
+          grid:{color:GRID_COLOR}, border:{color:'rgba(140,109,44,0.25)'},
+          ticks:{color:'#0090aa'}, min:0,
+        },
+        yP:{
+          type:'linear',position:'right',
+          title:{display:true,text:'Parasite density',color:'#ff2d6e'},
+          grid:{drawOnChartArea:false}, border:{color:'rgba(140,109,44,0.25)'},
+          ticks:{color:'#ff2d6e',callback:v=>(v*100).toFixed(0)+'%'},
+          min:0, max:1,
+        },
+      },
+    },
+  });
+}
+
+function buildEfficacyChart(lt) {
+  if (efficacyChartInst) efficacyChartInst.destroy();
+  const labels = lt.t.map(t => t.toFixed(2));
+
+  const datasets = [{
+    label: 'Combined VE',
+    data: lt.ve.map(v => v * 100),
+    borderColor: '#ffb300',
+    backgroundColor: 'rgba(255,179,0,0.05)',
+    fill:true, borderWidth:2.5, pointRadius:0, tension:0.3,
+    yAxisID:'yVE',
+  }];
+
+  lt.selectedStages.forEach(s => {
+    datasets.push({
+      label: STAGE_PARAMS[s].label.split(' ')[0]+' resist.',
+      data: lt.resist[s].map(r => r * 100),
+      borderColor: STAGE_PARAMS[s].color,
+      borderDash: [4,3],
+      borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: false,
+      yAxisID: 'yR',
+    });
+  });
+
+  efficacyChartInst = new Chart(document.getElementById('efficacyChart'), {
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{
+          labels:{font:{family:"'Nunito Sans',sans-serif",size:11},color:'#54565A',usePointStyle:true},
+        },
+        tooltip:{
+          backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,
+          titleColor:'#000000',bodyColor:'#54565A',padding:10,
+        },
+      },
+      scales:{
+        x:{
+          title:{display:true,text:'Years post-deployment',color:'#54565A'},
+          grid:{color:GRID_COLOR},border:{color:'rgba(140,109,44,0.25)'},
+          ticks:{maxTicksLimit:11,color:'#54565A'},
+        },
+        yVE:{
+          type:'linear',position:'left',min:0,max:100,
+          title:{display:true,text:'Vaccine efficacy (%)',color:'#ffb300'},
+          grid:{color:GRID_COLOR},border:{color:'rgba(140,109,44,0.25)'},
+          ticks:{color:'#ffb300',callback:v=>v+'%'},
+        },
+        yR:{
+          type:'linear',position:'right',min:0,max:100,
+          title:{display:true,text:'Resistance allele (%)',color:'#54565A'},
+          grid:{drawOnChartArea:false},border:{color:'rgba(140,109,44,0.25)'},
+          ticks:{color:'#54565A',callback:v=>v+'%'},
+        },
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESISTANCE TIMELINE BARS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderResTimeline(lt) {
+  const body = document.getElementById('resTimelineBody');
+  if (lt.selectedStages.length === 0) {
+    body.innerHTML = '<div style="font-family:\'Fira Code\',monospace;font-size:11px;color:var(--text3);">No stages selected.</div>';
+    return;
+  }
+
+  let html = '';
+  lt.selectedStages.forEach(s => {
+    const sp   = STAGE_PARAMS[s];
+    // Find year when resistance first crosses 50%
+    const idx50 = lt.resist[s].findIndex(r => r >= 0.5);
+    const yr50  = idx50 >= 0 ? lt.t[idx50].toFixed(1) + ' yr' : '>10 yr';
+    const finalR = (lt.resist[s][lt.resist[s].length - 1] * 100).toFixed(0);
+    const barPct = Math.min(100, parseFloat(finalR));
+
+    html += `
+      <div class="rt-stage">
+        <div class="rt-name" style="color:${sp.color}">${s.toUpperCase()}</div>
+        <div class="rt-bar-wrap">
+          <div class="rt-bar" style="width:${barPct}%;background:${sp.color}">
+            <span class="rt-bar-label">${finalR}%</span>
+          </div>
+        </div>
+        <div class="rt-year" style="color:${parseFloat(yr50) < 5 ? 'var(--magenta)' : 'var(--green)'}">
+          ${yr50}
+        </div>
+      </div>`;
+  });
+
+  body.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OUTCOME KPIs
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateKPIs(host, lt) {
+  // Peak titre
+  const peakAb = Math.max(...host.Ab);
+  document.getElementById('ocTitre').textContent = peakAb.toFixed(0);
+
+  // Parasitemia reduction (min P relative to start)
+  const maxP = Math.max(...host.P);
+  const minP = Math.min(...host.P);
+  const redPct = ((1 - minP / 0.8) * 100).toFixed(0);
+  document.getElementById('ocPara').textContent = redPct + '%';
+
+  // Efficacy at year 5
+  const yr5idx = lt.t.findIndex(t => t >= 5);
+  const eff5 = yr5idx >= 0 ? (lt.ve[yr5idx] * 100).toFixed(0) : '0';
+  document.getElementById('ocEff5').textContent = eff5 + '%';
+
+  // Resistance half-time — fastest stage
+  let fastestT = 999;
+  lt.selectedStages.forEach(s => {
+    const idx = lt.resist[s].findIndex(r => r >= 0.5);
+    if (idx >= 0) fastestT = Math.min(fastestT, lt.t[idx]);
+  });
+  document.getElementById('ocResT').textContent = fastestT < 999 ? fastestT.toFixed(1) + 'y' : '>10y';
+  document.getElementById('ocResT').parentElement.style.borderBottom = fastestT < 3 ? '2px solid var(--magenta)' : fastestT < 6 ? '2px solid var(--amber)' : '2px solid var(--green)';
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERPRETATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+function updateInterpretation(host, lt, costs) {
+  const sel = lt.selectedStages;
+  const adjuvant  = parseFloat(document.getElementById('adjuvant').value);
+  const vsg       = parseFloat(document.getElementById('vsgResist').value);
+  const breadth   = parseInt(document.getElementById('antigenBreadth').value);
+  const booster   = parseInt(document.getElementById('boosterMonth').value);
+
+  if (sel.length === 0) {
+    document.getElementById('interpText').innerHTML =
+      '<span class="bad">No lifecycle stage selected.</span> Select at least one target to design a vaccine.';
+    return;
+  }
+
+  if (costs.total > 500) {
+    document.getElementById('interpText').innerHTML =
+      '<span class="bad">⚠ Budget exceeded ($'+costs.total+'M > $500M).</span> Reduce the number of stages, doses, or formulation cost to stay within budget. Real-world vaccine development is severely constrained by funding availability.';
+    return;
+  }
+
+  let txt = '';
+
+  // Stage commentary
+  if (sel.includes('pre') && sel.includes('blood') && sel.includes('tbv')) {
+    txt += `<strong>Multi-stage vaccine</strong> targeting all three lifecycle phases. This is the gold standard but most expensive design — analogous to combining RTS,S with blood-stage antigens and a transmission-blocking component. `;
+  } else if (sel.length === 2) {
+    const pair = sel.sort().join('+');
+    if (pair === 'blood+pre') txt += `<strong>Pre-erythrocytic + blood-stage combination.</strong> Blocks infection at the liver then mops up escapees in blood. Complementary mechanisms but compound resistance risk. `;
+    if (pair === 'pre+tbv')   txt += `<strong>Pre-erythrocytic + transmission-blocking.</strong> Protects the individual and reduces onward transmission — population-level impact exceeds individual protection. `;
+    if (pair === 'blood+tbv') txt += `<strong>Blood-stage + TBV combination.</strong> Limits disease severity and reduces transmission. Blood-stage resistance will emerge faster, but TBV acts as a backstop. `;
+  } else if (sel[0] === 'pre') {
+    txt += `<strong>Pre-erythrocytic only (CSP/TRAP).</strong> Analogous to RTS,S/AS01B. Highest individual protection when antibody titres are high, but efficacy declines sharply as titres wane. `;
+  } else if (sel[0] === 'blood') {
+    txt += `<strong>Blood-stage only (AMA1/MSP1/RH5).</strong> Historically difficult — high antigenic diversity means rapid escape. `;
+  } else {
+    txt += `<strong>Transmission-blocking vaccine only (Pfs25/Pfs230).</strong> Altruistic design — provides no direct protection to the vaccinated individual but reduces community-level transmission intensity. `;
+  }
+
+  // Adjuvant commentary
+  if (adjuvant > 0.7) {
+    txt += `High adjuvant potency (${adjuvant.toFixed(2)}) drives a strong initial titre — expect good short-term efficacy. `;
+  } else if (adjuvant < 0.3) {
+    txt += `<span class="warn">Low adjuvant potency may result in suboptimal peak titres and rapid waning.</span> `;
+  }
+
+  // Dose commentary
+  if (currentDoses >= 4) {
+    txt += `Four-dose regimen with ${document.getElementById('doseInterval').value}-week intervals maximises titre peak and duration. `;
+  } else if (currentDoses === 1) {
+    txt += `<span class="warn">Single-dose regimens rarely achieve protective titres without a strong adjuvant or mRNA platform.</span> `;
+  }
+
+  // Booster
+  if (booster > 0) {
+    txt += `Booster at month ${booster} will rescue waning titres — important for pre-erythrocytic targets where efficacy drops below 50% within 12–18 months (cf. RTS,S phase III data). `;
+  }
+
+  // Breadth & VSG
+  if (breadth >= 4) {
+    txt += `<span class="good">Broad antigen coverage (${breadth} alleles) slows resistance evolution substantially.</span> `;
+  } else if (vsg > 0.7) {
+    txt += `<span class="warn">High VSG resistance modifier means the parasite retains most escape potential — antigenic diversity will quickly erode blood-stage protection.</span> `;
+  }
+
+  // Resistance projection
+  const yr5ve = lt.ve[lt.t.findIndex(t => t >= 5) || 0];
+  if (yr5ve < 0.15) {
+    txt += `<span class="bad">By year 5, combined efficacy falls below 15% — resistance and/or titre waning has largely nullified vaccine impact. Increase antigen breadth, lower VSG modifier, add a booster, or target multiple lifecycle stages.</span>`;
+  } else if (yr5ve > 0.35) {
+    txt += `<span class="good">Efficacy remains above 35% at year 5 — a durable vaccine by current standards. Consider adding breadth or a booster to sustain protection.</span>`;
+  }
+
+  document.getElementById('interpText').innerHTML = txt;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN RUN
+// ─────────────────────────────────────────────────────────────────────────────
+
+function runSim() {
+  const costs = computeCosts();
+  const host  = simulateWithinHost();
+  const lt    = simulateLongTerm(host);
+
+  buildHostChart(host);
+  buildEfficacyChart(lt);
+  renderResTimeline(lt);
+  updateKPIs(host, lt);
+  updateInterpretation(host, lt, costs);
+
+  // Footer updates
+  const stages_sel = lt.selectedStages.map(s => STAGE_PARAMS[s].label).join(' + ') || 'none';
+  document.getElementById('hostFooter').textContent =
+    `Targets: ${stages_sel}. Peak Ab = ${Math.max(...host.Ab).toFixed(0)} AU. Doses administered at intervals of ${document.getElementById('doseInterval').value} weeks.`;
+  document.getElementById('efficacyFooter').textContent =
+    `Solid line = combined vaccine efficacy. Dashed lines = resistance allele frequency per stage. VSG modifier = ${document.getElementById('vsgResist').value}.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Select pre-erythrocytic by default as illustrative starting point
+toggleStage('pre');
+updateCosts();
+</script>
+</body>
+</html>

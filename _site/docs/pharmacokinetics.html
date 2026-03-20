@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pharmacology Lab — ACT Resistance & Treatment Failure Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #ffffff;
+  --surface: #f3f0e9;
+  --surface2: #CFD2D3;
+  --border-main: rgba(140,109,44,0.25);
+  --accent: #8C6D2C;
+  --text: #000000;
+  --text-dim: #54565A;
+  /* mapped aliases for legacy references */
+  --paper: var(--bg);
+  --paper2: var(--surface);
+  --paper3: #dfd7c4;
+  --ink: var(--text);
+  --ink2: #2a2e16;
+  --ink3: #54565A;
+  --ink4: #54565A;
+  --rule: rgba(140,109,44,0.25);
+  --rule2: #ddd3bb;
+  /* pharmacology palette */
+  --arte:   #1a4f2a;
+  --part:   #5c2d00;
+  --para:   #7a1a1a;
+  --resist: #4a1f6a;
+  --clear:  #1f3f5a;
+  --safe:   #1a4020;
+  --danger: #6a1a1a;
+  --warn:   #5c3a00;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Nunito Sans',Arial,sans-serif;min-height:100vh;overflow-x:hidden;}
+.wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 28px 64px;}
+
+/* ── MASTHEAD ─────────────────────────────────────────────── */
+.masthead{border-bottom:3px double var(--ink3);padding:36px 0 20px;margin-bottom:28px;display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.journal-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px;}
+h1{font-family:Garamond,serif;font-size:clamp(22px,4vw,38px);font-weight:400;line-height:1.1;color:var(--text-dim);letter-spacing:-0.5px;}
+h1 em{font-style:normal;color:var(--accent);}
+.subtitle{font-size:15px;color:var(--ink3);font-style:italic;margin-top:6px;}
+.specimen-box{border:1px solid var(--rule);padding:10px 16px;background:var(--paper2);font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink3);line-height:1.8;min-width:210px;}
+.specimen-box .sp-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);border-bottom:1px solid var(--rule);margin-bottom:6px;padding-bottom:4px;}
+.field-note{background:var(--paper2);border-left:3px solid var(--accent);padding:10px 16px;font-style:italic;font-size:14px;color:var(--ink3);margin-bottom:28px;line-height:1.5;}
+
+/* ── LAYOUT ───────────────────────────────────────────────── */
+.layout{display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:start;}
+@media(max-width:760px){.layout{grid-template-columns:1fr;}}
+.ctrl-col{position:sticky;top:16px;display:flex;flex-direction:column;gap:14px;}
+.panel{border:1px solid var(--rule);background:var(--paper2);}
+.panel-title{background:#000000;color:#ffffff;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;padding:5px 12px;}
+.panel-body{padding:14px 16px;}
+
+/* Drug selector */
+.drug-grid{display:grid;grid-template-columns:1fr;gap:5px;margin-bottom:0;}
+.drug-btn{padding:9px 12px;border:1px solid var(--rule);background:var(--paper);font-family:'Nunito Sans',sans-serif;font-size:13px;color:var(--ink3);cursor:pointer;transition:all .15s;text-align:left;display:flex;justify-content:space-between;align-items:center;}
+.drug-btn:hover{border-color:var(--ink3);}
+.drug-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.drug-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:0.7;}
+
+/* Sliders */
+.s-group{margin-bottom:14px;}
+.s-group:last-child{margin-bottom:0;}
+.s-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+.s-label{font-size:13px;font-weight:600;color:var(--ink2);}
+.s-label .sub{font-weight:300;font-style:italic;font-size:11px;color:var(--ink4);display:block;}
+.s-val{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500;color:var(--ink);background:var(--paper);border:1px solid var(--rule);padding:1px 6px;min-width:44px;text-align:right;}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--rule);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--paper);box-shadow:0 1px 3px rgba(0,0,0,0.25);cursor:pointer;transition:transform .1s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+
+/* Resistance toggles */
+.resist-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;}
+.resist-btn{padding:7px 8px;border:1px solid var(--rule);background:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink4);cursor:pointer;transition:all .15s;text-align:center;line-height:1.4;}
+.resist-btn:hover{border-color:var(--resist);}
+.resist-btn.on{background:rgba(74,31,106,0.15);border-color:var(--resist);color:var(--resist);}
+
+/* Metrics */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.metric{border:1px solid var(--rule);padding:9px 11px;background:var(--paper);}
+.m-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink4);margin-bottom:3px;}
+.m-value{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;line-height:1;}
+.m-value.green{color:var(--arte);}
+.m-value.red{color:var(--para);}
+.m-value.amber{color:var(--warn);}
+.m-value.violet{color:var(--resist);}
+.m-sub{font-size:10px;color:var(--ink4);font-style:italic;margin-top:2px;}
+
+/* ── CHARTS ───────────────────────────────────────────────── */
+.charts-col{display:flex;flex-direction:column;gap:20px;}
+.chart-hd{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--rule);margin-bottom:10px;padding-bottom:6px;}
+.chart-title{font-family:Garamond,serif;font-size:17px;font-weight:400;font-style:italic;color:var(--text);}
+.chart-fig{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;color:var(--ink4);text-transform:uppercase;}
+.chart-wrap{position:relative;height:230px;background:var(--paper);border:1px solid var(--rule);padding:10px;}
+.chart-foot{font-size:11px;font-style:italic;color:var(--ink4);margin-top:6px;line-height:1.4;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:680px){.two-col{grid-template-columns:1fr;}}
+.interp-panel{border:1px solid var(--rule);background:var(--paper2);}
+.interp-title{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);padding:5px 12px;border-bottom:1px solid var(--rule);}
+.interp-body{padding:12px 14px;font-size:13.5px;line-height:1.7;color:var(--ink2);}
+.interp-body strong{color:var(--ink);font-weight:600;}
+.interp-body .warn{color:var(--danger);font-weight:600;}
+.interp-body .good{color:var(--safe);font-weight:600;}
+.eq-box{background:var(--paper2);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:2;color:var(--ink4);}
+.eq-box h3{font-family:'Nunito Sans',sans-serif;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:8px;}
+.eq{color:var(--accent);}
+.pg-footer{border-top:2px solid var(--rule);margin-top:40px;padding-top:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.pg-footer div{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink4);line-height:1.8;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.chart-block{animation:fadeUp .35s ease both;}
+.chart-block:nth-child(2){animation-delay:.07s;}
+.chart-block:nth-child(3){animation-delay:.14s;}
+.chart-block:nth-child(4){animation-delay:.21s;}
+.chart-block:nth-child(5){animation-delay:.28s;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- MASTHEAD -->
+<div class="masthead">
+  <div>
+    <div class="journal-tag">Clinical Pharmacology · Treatment Failure Lab</div>
+    <h1>ACT Pharmacokinetics &amp;<br><em>Drug Resistance Dynamics</em></h1>
+    <div class="subtitle">Parasite clearance, artemisinin partial resistance, and the partner drug firewall</div>
+  </div>
+  <div class="specimen-box">
+    <div class="sp-title">Drug Classes</div>
+    <div>● AL &nbsp;— Artemether-Lumefantrine</div>
+    <div>● AS+AQ — Artesunate-Amodiaquine</div>
+    <div>● DHA-PPQ — Dihydroartemisinin-Pip.</div>
+    <div>● AS Mono — Artesunate alone</div>
+    <div style="margin-top:6px;color:var(--ink4)">P. falciparum · 1 patient · 28d</div>
+  </div>
+</div>
+
+<!-- FIELD NOTE -->
+<div class="field-note">
+  💊 Artemisinin combination therapies (ACTs) rely on a fast-acting artemisinin component to reduce parasite biomass and a longer-acting partner drug to eliminate residual parasites. Partial artemisinin resistance (PfKelch13 mutations) slows early clearance; partner drug resistance removes the second-line firewall, causing treatment failure.
+</div>
+
+<div class="layout">
+
+<!-- LEFT CONTROLS -->
+<div class="ctrl-col">
+
+  <!-- Drug selector -->
+  <div class="panel">
+    <div class="panel-title">Drug Regimen</div>
+    <div class="panel-body">
+      <div class="drug-grid">
+        <button class="drug-btn active" id="btn-al"    onclick="selectDrug('al')">
+          <span><strong>AL</strong> — Artemether-Lumefantrine<br><span style="font-size:11px;font-style:italic;opacity:0.75">6-dose over 3 days · first-line</span></span>
+          <span class="drug-tag">t½: 2h / 3d</span>
+        </button>
+        <button class="drug-btn" id="btn-asaq" onclick="selectDrug('asaq')">
+          <span><strong>AS+AQ</strong> — Artesunate-Amodiaquine<br><span style="font-size:11px;font-style:italic;opacity:0.75">3-day regimen · Africa first-line</span></span>
+          <span class="drug-tag">t½: 2h / 9d</span>
+        </button>
+        <button class="drug-btn" id="btn-dhappq" onclick="selectDrug('dhappq')">
+          <span><strong>DHA-PPQ</strong> — Dihydroartemisinin-Piperaquine<br><span style="font-size:11px;font-style:italic;opacity:0.75">3-day regimen · SE Asia / Africa</span></span>
+          <span class="drug-tag">t½: 1h / 28d</span>
+        </button>
+        <button class="drug-btn" id="btn-mono" onclick="selectDrug('mono')">
+          <span><strong>Artesunate Mono</strong><br><span style="font-size:11px;font-style:italic;opacity:0.75">⚠ Monotherapy — not recommended</span></span>
+          <span class="drug-tag">t½: 2h / —</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resistance genotype -->
+  <div class="panel">
+    <div class="panel-title">Resistance Genotype</div>
+    <div class="panel-body">
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:8px;font-style:italic;">Select resistance mutations present in infecting strain:</div>
+      <div class="resist-grid">
+        <button class="resist-btn" id="rbtn-k13"   onclick="toggleResist('k13')">PfKelch13<br><span style="font-size:8px">artemisinin partial R</span></button>
+        <button class="resist-btn" id="rbtn-pfcrt"  onclick="toggleResist('pfcrt')">PfCRT<br><span style="font-size:8px">lumefantrine/CQ R</span></button>
+        <button class="resist-btn" id="rbtn-pfmdr1" onclick="toggleResist('pfmdr1')">PfMDR1<br><span style="font-size:8px">partner drug efflux</span></button>
+        <button class="resist-btn" id="rbtn-ppm2k"  onclick="toggleResist('ppm2k')">PfPM2K<br><span style="font-size:8px">piperaquine R</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient / treatment parameters -->
+  <div class="panel">
+    <div class="panel-title">Patient &amp; Treatment Parameters</div>
+    <div class="panel-body">
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Initial parasite density
+            <span class="sub">parasites/µL at presentation</span>
+          </span>
+          <span class="s-val" id="paraVal">50k</span>
+        </div>
+        <input type="range" id="initPara" min="1000" max="500000" step="1000" value="50000" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Treatment adherence
+            <span class="sub">Fraction of doses taken</span>
+          </span>
+          <span class="s-val" id="adhVal">100%</span>
+        </div>
+        <input type="range" id="adherence" min="0.5" max="1.0" step="0.05" value="1.0" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Artemisinin kill rate modifier
+            <span class="sub">1.0 = fully sensitive</span>
+          </span>
+          <span class="s-val" id="arteKillVal">1.00</span>
+        </div>
+        <input type="range" id="arteKill" min="0.1" max="1.0" step="0.05" value="1.0" oninput="onSlider()">
+      </div>
+      <div class="s-group">
+        <div class="s-row">
+          <span class="s-label">Partner drug kill rate modifier
+            <span class="sub">1.0 = fully sensitive</span>
+          </span>
+          <span class="s-val" id="partKillVal">1.00</span>
+        </div>
+        <input type="range" id="partKill" min="0.0" max="1.0" step="0.05" value="1.0" oninput="onSlider()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Metrics -->
+  <div class="panel">
+    <div class="panel-title">Clinical Outcomes</div>
+    <div class="panel-body">
+      <div class="metrics-grid">
+        <div class="metric"><div class="m-label">PCT (days)</div><div class="m-value green" id="mPCT">—</div><div class="m-sub">parasite clearance time</div></div>
+        <div class="metric"><div class="m-label">Day 28 outcome</div><div class="m-value" id="mD28">—</div><div class="m-sub">cure or failure</div></div>
+        <div class="metric"><div class="m-label">Nadir density</div><div class="m-value green" id="mNadir">—</div><div class="m-sub">parasites/µL</div></div>
+        <div class="metric"><div class="m-label">Recrudescence</div><div class="m-value red" id="mRecrude">—</div><div class="m-sub">day if occurs</div></div>
+        <div class="metric"><div class="m-label">Area under curve</div><div class="m-value amber" id="mAUC">—</div><div class="m-sub">parasite exposure (log)</div></div>
+        <div class="metric"><div class="m-label">R-allele spread</div><div class="m-value violet" id="mRAllele">—</div><div class="m-sub">selection index</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equations -->
+  <div class="eq-box">
+    <h3>PK/PD Model</h3>
+    <div><span class="eq">dP/dt</span> = r·P − k_arte(t)·P − k_part(t)·P</div>
+    <div><span class="eq">k_arte</span> = K_A·C_A(t)·f_K13·RingStage(t)</div>
+    <div><span class="eq">k_part</span> = K_P·C_P(t)·f_MDR</div>
+    <div><span class="eq">C_A(t)</span> = Σ Dose·exp(−λ_A·t) &nbsp;<span style="color:var(--ink4);font-size:9px">sum over doses</span></div>
+    <div><span class="eq">C_P(t)</span> = Dose·exp(−λ_P·t) &nbsp;<span style="color:var(--ink4);font-size:9px">partner drug</span></div>
+    <div style="color:var(--ink4);font-size:9px;margin-top:4px">Ring-stage parasite is ~10× less sensitive to artemisinin (dormancy)</div>
+  </div>
+</div>
+
+<!-- RIGHT CHARTS -->
+<div class="charts-col">
+
+  <!-- Chart 1: Parasite density -->
+  <div class="chart-block">
+    <div class="chart-hd">
+      <div class="chart-title">Parasite Density — Clearance Curve</div>
+      <div class="chart-fig">Fig. I · Days 0–28</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="clearChart"></canvas>
+    </div>
+    <div class="chart-foot" id="clearFoot">Log₁₀ parasite density per µL. Threshold of detection ~10 parasites/µL (microscopy), ~0.01/µL (PCR).</div>
+  </div>
+
+  <!-- Charts 2 & 3: PK profiles -->
+  <div class="two-col">
+    <div class="chart-block">
+      <div class="chart-hd">
+        <div class="chart-title">Drug Concentrations</div>
+        <div class="chart-fig">Fig. II · PK</div>
+      </div>
+      <div class="chart-wrap" style="height:210px;">
+        <canvas id="pkChart"></canvas>
+      </div>
+      <div class="chart-foot" id="pkFoot">Artemisinin component (fast; hours) and partner drug (slow; days). MIC threshold shown.</div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-hd">
+        <div class="chart-title">Kill Rates over Time</div>
+        <div class="chart-fig">Fig. III · PD</div>
+      </div>
+      <div class="chart-wrap" style="height:210px;">
+        <canvas id="pdChart"></canvas>
+      </div>
+      <div class="chart-foot">Daily parasite kill rate from each drug component. Partner drug sustains killing after artemisinin wanes.</div>
+    </div>
+  </div>
+
+  <!-- Chart 4: Resistance spread across population -->
+  <div class="chart-block">
+    <div class="chart-hd">
+      <div class="chart-title">Resistance Evolution — Population Level</div>
+      <div class="chart-fig">Fig. IV · 5-year projection</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="resistChart"></canvas>
+    </div>
+    <div class="chart-foot" id="resistFoot">Allele frequency dynamics of resistance mutations under ongoing ACT selection pressure (replicator equation).</div>
+  </div>
+
+  <!-- Chart 5: Dose-response / treatment failure probability -->
+  <div class="chart-block">
+    <div class="chart-hd">
+      <div class="chart-title">Treatment Failure Probability vs Adherence</div>
+      <div class="chart-fig">Fig. V · sensitivity</div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="failChart"></canvas>
+    </div>
+    <div class="chart-foot">Probability of day-28 treatment failure as adherence decreases, for each resistance genotype combination.</div>
+  </div>
+
+  <!-- Interpretation -->
+  <div class="interp-panel">
+    <div class="interp-title">Clinical &amp; Pharmacological Interpretation</div>
+    <div class="interp-body" id="interpText">Select a drug and resistance genotype to generate interpretation.</div>
+  </div>
+
+  <div class="pg-footer">
+    <div>Pharmacology Lab · ACT Resistance &amp; Treatment Failure Simulator<br>PK/PD model based on White et al. (2015) · Lancet Infectious Diseases</div>
+    <div style="text-align:right">PfKelch13 mutations: Ariey et al. (2014) · Nature<br>Partner drug resistance: Duru et al. (2021) · Drug Resist Upd</div>
+  </div>
+
+</div>
+</div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DRUG PRESETS
+// ─────────────────────────────────────────────────────────────────────────────
+const DRUGS = {
+  al:     { label:'AL (Artemether-Lumefantrine)', arteHL:0.08, partHL:3.0,  arteK:0.9,  partK:0.6,  doses:6,  dosingInterval:0.5, color:'#1a4f2a', partColor:'#5c2d00', MIC_arte:0.3, MIC_part:0.15 },
+  asaq:   { label:'AS+AQ (Artesunate-Amodiaquine)', arteHL:0.08, partHL:9.0,  arteK:0.85, partK:0.55, doses:3,  dosingInterval:1.0, color:'#1a4f2a', partColor:'#3a4500', MIC_arte:0.3, MIC_part:0.10 },
+  dhappq: { label:'DHA-PPQ',                      arteHL:0.07, partHL:28.0, arteK:0.95, partK:0.50, doses:3,  dosingInterval:1.0, color:'#1a4f2a', partColor:'#1f3f5a', MIC_arte:0.3, MIC_part:0.08 },
+  mono:   { label:'Artesunate Monotherapy',        arteHL:0.08, partHL:null, arteK:0.9,  partK:0.0,  doses:7,  dosingInterval:1.0, color:'#1a4f2a', partColor:null,      MIC_arte:0.3, MIC_part:null },
+};
+
+const RESIST_MODS = {
+  k13:   { arteKillMod:0.35, partKillMod:1.0,  label:'PfKelch13 (arte. partial R)' },
+  pfcrt: { arteKillMod:1.0,  partKillMod:0.5,  label:'PfCRT (lumefantrine/CQ R)' },
+  pfmdr1:{ arteKillMod:1.0,  partKillMod:0.6,  label:'PfMDR1 (partner drug efflux)' },
+  ppm2k: { arteKillMod:1.0,  partKillMod:0.3,  label:'PfPM2K (piperaquine R)' },
+};
+
+// Resistance population dynamics parameters
+const RESIST_POP = {
+  k13:   { initFreq:0.05, selCoeff:0.15, label:'K13',    color:'#4a1f6a' },
+  pfcrt: { initFreq:0.10, selCoeff:0.10, label:'PfCRT',  color:'#7a3a00' },
+  pfmdr1:{ initFreq:0.08, selCoeff:0.08, label:'PfMDR1', color:'#1f3f5a' },
+  ppm2k: { initFreq:0.02, selCoeff:0.20, label:'PM2K',   color:'#3a1f5a' },
+};
+
+let currentDrug = 'al';
+let activeResist = new Set();
+let clearChartInst, pkChartInst, pdChartInst, resistChartInst, failChartInst;
+
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size   = 10;
+Chart.defaults.color       = '#54565A';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PK MODEL — one-compartment first-order elimination
+// ─────────────────────────────────────────────────────────────────────────────
+function calcPK(drug, adherence, T_days = 28) {
+  const dt     = 0.1; // hours resolution within day, stored daily
+  const steps  = Math.round(T_days * 24 / dt);
+  const arteHL_h = drug.arteHL * 24;   // half-life in hours
+  const partHL_h = drug.partHL ? drug.partHL * 24 : null;
+  const lambda_a = Math.LN2 / arteHL_h;
+  const lambda_p = partHL_h ? Math.LN2 / partHL_h : 0;
+
+  // Dose schedule — artemisinin component: unit dose = 1 (relative)
+  const arteDoses = [];
+  const partDoses = [];
+  for (let d = 0; d < drug.doses; d++) {
+    const tDose = d * drug.dosingInterval * 24; // hours
+    const taken  = Math.random() < adherence;   // stochastic adherence per dose
+    // Use deterministic adherence for reproducibility: take first floor(doses*adh) doses
+    arteDoses.push({ t: tDose, taken: d < Math.round(drug.doses * adherence) });
+    if (drug.partHL) partDoses.push({ t: Math.min(tDose, 0), taken: d === 0 }); // single partner loading
+  }
+
+  const C_arte = new Array(steps).fill(0);
+  const C_part = new Array(steps).fill(0);
+
+  for (let i = 0; i < steps; i++) {
+    const t_h = i * dt;
+    // Sum contributions from each dose
+    let ca = 0, cp = 0;
+    arteDoses.forEach(({ t, taken }) => {
+      if (taken && t_h >= t) ca += Math.exp(-lambda_a * (t_h - t));
+    });
+    if (drug.partHL) {
+      cp = Math.exp(-lambda_p * t_h);
+    }
+    C_arte[i] = ca;
+    C_part[i] = cp;
+  }
+
+  // Downsample to daily
+  const samplesPerDay = Math.round(24 / dt);
+  const Ca_daily = [], Cp_daily = [], t_days = [];
+  for (let d = 0; d <= T_days; d++) {
+    const idx = Math.min(d * samplesPerDay, steps - 1);
+    Ca_daily.push(C_arte[idx]);
+    Cp_daily.push(C_part[idx]);
+    t_days.push(d);
+  }
+
+  return { Ca: Ca_daily, Cp: Cp_daily, t: t_days, lambda_a, lambda_p };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PARASITE DYNAMICS
+// Ring-stage parasites (~day 0-2 post-infection) are ~10x less sensitive to arte
+// dP/dt = r*P - k_arte(t)*P - k_part(t)*P
+// ─────────────────────────────────────────────────────────────────────────────
+function calcParasite(drug, pk, initDens, arteKillMod, partKillMod, adherence) {
+  const T = pk.t.length;
+  const r_growth = 0.0625;  // ~16x/48h cycle ≈ 0.0625/h → ×1.0 per day
+  const K_arte   = drug.arteK * arteKillMod;
+  const K_part   = drug.partK * partKillMod;
+  const detectLim = 0.01;
+
+  let P       = initDens;
+  const Pout  = [P];
+  const k_arte_out = [0];
+  const k_part_out = [0];
+  let PCT  = null;
+  let recrudDay = null;
+  let nadirP = Infinity, nadirDay = 0;
+  let auc = 0;
+
+  // Ring-stage fraction: simple model — ring stages dominate early (day 0–1),
+  // then trophozoites/schizonts take over; ring fraction = exp(-0.7*day)
+  for (let d = 1; d < T; d++) {
+    const ringFrac   = Math.exp(-0.7 * d);       // fraction in ring stage
+    const sensAdj    = 1 - ringFrac * 0.9;       // rings are 10x less sensitive
+    const ka = K_arte * pk.Ca[d] * sensAdj;
+    const kp = K_part * pk.Cp[d];
+    const netRate    = r_growth - ka - kp;
+    P = Math.max(0, P * Math.exp(netRate));
+
+    if (P > 0 && P < nadirP) { nadirP = P; nadirDay = d; }
+    if (PCT === null && P < detectLim) PCT = d;
+    if (PCT !== null && P >= 500 && recrudDay === null && d > 3) recrudDay = d;
+    auc += Math.log10(Math.max(0.001, P));
+
+    Pout.push(P);
+    k_arte_out.push(ka);
+    k_part_out.push(kp);
+  }
+
+  const d28outcome = (Pout[Math.min(28, T-1)] < 500 && !recrudDay) ? 'CURE' : 'FAILURE';
+
+  return { P: Pout, k_arte: k_arte_out, k_part: k_part_out,
+           PCT, recrudDay, nadirP, nadirDay, auc, d28outcome };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RESISTANCE POPULATION EVOLUTION
+// ─────────────────────────────────────────────────────────────────────────────
+function calcResistEvolution(T_years = 5) {
+  const dt = 1/365;
+  const steps = Math.round(T_years / dt);
+  const coverage = 0.5;  // population-level ACT coverage
+
+  const freqs = {};
+  Object.keys(RESIST_POP).forEach(k => { freqs[k] = RESIST_POP[k].initFreq; });
+
+  const history = {};
+  Object.keys(RESIST_POP).forEach(k => { history[k] = []; });
+  const t_yr = [];
+
+  for (let i = 0; i < steps; i++) {
+    const t = i * dt;
+    Object.keys(RESIST_POP).forEach(k => {
+      const { selCoeff } = RESIST_POP[k];
+      // Selection strength increased if this resistance is active in current drug
+      const extraSel = activeResist.has(k) ? 0.05 : 0;
+      const dp = (selCoeff + extraSel) * coverage * freqs[k] * (1 - freqs[k]);
+      freqs[k] = Math.min(1, Math.max(0, freqs[k] + dp * dt * 365));
+    });
+    if (i % 30 === 0) {
+      t_yr.push(t);
+      Object.keys(RESIST_POP).forEach(k => history[k].push(freqs[k]));
+    }
+  }
+
+  return { t: t_yr, freqs: history };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FAILURE PROBABILITY vs ADHERENCE SWEEP
+// ─────────────────────────────────────────────────────────────────────────────
+function calcFailureSweep(drug) {
+  const adhRange = Array.from({length:11}, (_,i) => i/10);
+  const initDens = parseFloat(document.getElementById('initPara').value);
+
+  // Four genotype combos
+  const combos = [
+    { label:'Fully sensitive',    ak:1.0,  pk:1.0,  color:'#1a4f2a' },
+    { label:'K13 only',           ak:0.35, pk:1.0,  color:'#4a1f6a' },
+    { label:'Partner R only',     ak:1.0,  pk:0.4,  color:'#5c2d00' },
+    { label:'K13 + Partner R',    ak:0.35, pk:0.4,  color:'#7a1a1a' },
+  ];
+
+  return combos.map(c => ({
+    ...c,
+    data: adhRange.map(adh => {
+      // Run 5 simulations, take mean failure rate
+      let fails = 0;
+      for (let r = 0; r < 5; r++) {
+        const pk   = calcPK(drug, adh);
+        const para = calcParasite(drug, pk, initDens, c.ak, c.pk, adh);
+        if (para.d28outcome === 'FAILURE') fails++;
+      }
+      return fails / 5;
+    }),
+    adherence: adhRange,
+  }));
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CHART BUILDERS
+// ─────────────────────────────────────────────────────────────────────────────
+const GRID = 'rgba(140,109,44,0.15)';
+const TICK = '#54565A';
+
+function buildClearChart(para, pk) {
+  if (clearChartInst) clearChartInst.destroy();
+  const drug = DRUGS[currentDrug];
+  const logP = para.P.map(p => Math.log10(Math.max(0.001, p)));
+
+  const datasets = [{
+    label: 'Parasite density (log₁₀/µL)',
+    data: logP,
+    borderColor: '#7a1a1a',
+    backgroundColor: 'rgba(122,26,26,0.06)',
+    fill: true, borderWidth: 2.5, pointRadius: 0, tension: 0.3,
+  }];
+
+  // Detection threshold lines
+  const tLen = para.P.length;
+  datasets.push({
+    label: 'Microscopy limit (~10/µL)',
+    data: Array(tLen).fill(1),
+    borderColor: '#8c8f58', borderDash:[4,3], borderWidth:1, pointRadius:0, fill:false,
+  });
+  datasets.push({
+    label: 'PCR limit (~0.01/µL)',
+    data: Array(tLen).fill(-2),
+    borderColor: '#c4c69a', borderDash:[2,4], borderWidth:1, pointRadius:0, fill:false,
+  });
+
+  clearChartInst = new Chart(document.getElementById('clearChart'), {
+    type:'line',
+    data:{ labels:para.P.map((_,i)=>i), datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{font:{family:"'Nunito Sans',sans-serif",size:11,style:'italic'},color:'#54565A',usePointStyle:true}},
+        tooltip:{backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8,
+          callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} log₁₀/µL`}},
+        annotation:{},
+      },
+      scales:{
+        x:{title:{display:true,text:'Day',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK,maxTicksLimit:14}},
+        y:{title:{display:true,text:'Log₁₀ parasites/µL',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK},min:-2.5,max:Math.ceil(Math.log10(parseFloat(document.getElementById('initPara').value))+0.5)},
+      },
+    },
+  });
+}
+
+function buildPKChart(pk) {
+  if (pkChartInst) pkChartInst.destroy();
+  const drug = DRUGS[currentDrug];
+  const datasets = [{
+    label: 'Artemisinin component',
+    data: pk.Ca,
+    borderColor: '#1a4f2a', backgroundColor:'rgba(26,79,42,0.07)',
+    fill:true, borderWidth:2, pointRadius:0, tension:0.4,
+    yAxisID:'yA',
+  }];
+  if (drug.partHL) {
+    datasets.push({
+      label: 'Partner drug',
+      data: pk.Cp,
+      borderColor: '#5c2d00', backgroundColor:'rgba(92,45,0,0.07)',
+      fill:true, borderWidth:2, pointRadius:0, tension:0.4,
+      yAxisID:'yP',
+    });
+    // MIC lines
+    datasets.push({label:'MIC (arte)',data:Array(pk.t.length).fill(drug.MIC_arte),borderColor:'#1a4f2a',borderDash:[4,3],borderWidth:1,pointRadius:0,fill:false,yAxisID:'yA'});
+    datasets.push({label:'MIC (partner)',data:Array(pk.t.length).fill(drug.MIC_part),borderColor:'#5c2d00',borderDash:[4,3],borderWidth:1,pointRadius:0,fill:false,yAxisID:'yP'});
+  }
+
+  pkChartInst = new Chart(document.getElementById('pkChart'), {
+    type:'line',
+    data:{labels:pk.t, datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:"'Nunito Sans',sans-serif",size:10,style:'italic'},color:'#54565A',usePointStyle:true,padding:8}},
+        tooltip:{backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8}},
+      scales:{
+        x:{title:{display:true,text:'Day',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK,maxTicksLimit:8}},
+        yA:{type:'linear',position:'left',title:{display:true,text:'Arte. conc.',color:'#1a4f2a'},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:'#1a4f2a'},min:0},
+        yP:{type:'linear',position:'right',title:{display:true,text:'Partner conc.',color:'#5c2d00'},grid:{drawOnChartArea:false},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:'#5c2d00'},min:0},
+      },
+    },
+  });
+}
+
+function buildPDChart(para) {
+  if (pdChartInst) pdChartInst.destroy();
+  pdChartInst = new Chart(document.getElementById('pdChart'), {
+    type:'line',
+    data:{
+      labels:para.P.map((_,i)=>i),
+      datasets:[
+        {label:'Artemisinin kill rate',data:para.k_arte,borderColor:'#1a4f2a',backgroundColor:'rgba(26,79,42,0.06)',fill:true,borderWidth:2,pointRadius:0,tension:0.3},
+        {label:'Partner drug kill rate',data:para.k_part,borderColor:'#5c2d00',backgroundColor:'rgba(92,45,0,0.06)',fill:true,borderWidth:2,pointRadius:0,tension:0.3},
+      ],
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:"'Nunito Sans',sans-serif",size:10,style:'italic'},color:'#54565A',usePointStyle:true,padding:8}},
+        tooltip:{backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8}},
+      scales:{
+        x:{title:{display:true,text:'Day',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK,maxTicksLimit:8}},
+        y:{title:{display:true,text:'Kill rate (per day)',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK},min:0},
+      },
+    },
+  });
+}
+
+function buildResistChart(ev) {
+  if (resistChartInst) resistChartInst.destroy();
+  const datasets = Object.keys(RESIST_POP).map(k => ({
+    label: RESIST_POP[k].label + (activeResist.has(k) ? ' ★' : ''),
+    data: ev.freqs[k].map(f => f*100),
+    borderColor: RESIST_POP[k].color,
+    borderWidth: activeResist.has(k) ? 2.5 : 1.5,
+    borderDash: activeResist.has(k) ? [] : [4,3],
+    pointRadius: 0, fill:false, tension:0.3,
+  }));
+
+  resistChartInst = new Chart(document.getElementById('resistChart'), {
+    type:'line',
+    data:{labels:ev.t.map(t=>t.toFixed(1)), datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:"'Nunito Sans',sans-serif",size:11,style:'italic'},color:'#54565A',usePointStyle:true}},
+        tooltip:{backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8,
+          callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`}}},
+      scales:{
+        x:{title:{display:true,text:'Years',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK,maxTicksLimit:6}},
+        y:{min:0,max:100,title:{display:true,text:'Allele frequency (%)',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK,callback:v=>v+'%'}},
+      },
+    },
+  });
+}
+
+function buildFailChart(sweepData) {
+  if (failChartInst) failChartInst.destroy();
+  const datasets = sweepData.map(s => ({
+    label: s.label,
+    data: s.data.map(d => d*100),
+    borderColor: s.color,
+    borderWidth: 2,
+    pointRadius: 3,
+    fill: false,
+    tension: 0.3,
+  }));
+
+  failChartInst = new Chart(document.getElementById('failChart'), {
+    type:'line',
+    data:{labels:sweepData[0].adherence.map(a=>(a*100).toFixed(0)+'%'), datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:"'Nunito Sans',sans-serif",size:11,style:'italic'},color:'#54565A',usePointStyle:true}},
+        tooltip:{backgroundColor:'#ffffff',borderColor:'rgba(140,109,44,0.25)',borderWidth:1,titleColor:'#000000',bodyColor:'#54565A',padding:8,
+          callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y.toFixed(0)}% failure`}}},
+      scales:{
+        x:{title:{display:true,text:'Adherence',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK}},
+        y:{min:0,max:100,title:{display:true,text:'Day-28 failure (%)',color:TICK},grid:{color:GRID},border:{color:'rgba(140,109,44,0.25)'},ticks:{color:TICK,callback:v=>v+'%'}},
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// METRICS + KPIs
+// ─────────────────────────────────────────────────────────────────────────────
+function updateMetrics(para, ev) {
+  const PCT_val = para.PCT ? para.PCT+'d' : '>28d';
+  document.getElementById('mPCT').textContent = PCT_val;
+  document.getElementById('mPCT').className   = 'm-value ' + (para.PCT && para.PCT <= 3 ? 'green' : para.PCT && para.PCT <= 7 ? 'amber' : 'red');
+
+  const d28El = document.getElementById('mD28');
+  d28El.textContent = para.d28outcome;
+  d28El.className   = 'm-value ' + (para.d28outcome === 'CURE' ? 'green' : 'red');
+
+  document.getElementById('mNadir').textContent = para.nadirP < 0.01 ? '<0.01' : para.nadirP.toFixed(2);
+  document.getElementById('mRecrude').textContent = para.recrudDay ? 'Day '+para.recrudDay : 'None';
+  document.getElementById('mRecrude').className = 'm-value ' + (para.recrudDay ? 'red' : 'green');
+
+  document.getElementById('mAUC').textContent = para.auc.toFixed(0);
+
+  // Resistance allele selection index — how much does current setup accelerate resistance?
+  const selIdx = Array.from(activeResist).reduce((s,k) => s + RESIST_POP[k].selCoeff, 0);
+  document.getElementById('mRAllele').textContent = selIdx > 0 ? '+'+selIdx.toFixed(2) : '0.00';
+  document.getElementById('mRAllele').className = 'm-value ' + (selIdx > 0.2 ? 'red' : selIdx > 0.1 ? 'amber' : 'violet');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INTERPRETATION
+// ─────────────────────────────────────────────────────────────────────────────
+function updateInterpretation(para, pk) {
+  const drug = DRUGS[currentDrug];
+  const adherence = parseFloat(document.getElementById('adherence').value);
+  const ak = parseFloat(document.getElementById('arteKill').value);
+  const partk = parseFloat(document.getElementById('partKill').value);
+  let txt = '';
+
+  // Drug commentary
+  if (currentDrug === 'mono') {
+    txt += `<span class="warn">⚠ Artesunate monotherapy is contra-indicated by WHO.</span> Without a partner drug, the residual ~1% of parasites surviving artemisinin are not cleared — recrudescence is near-certain. This scenario illustrates why monotherapy is the primary driver of artemisinin resistance selection: resistant mutants that survive the artemisinin window face no partner drug firewall. `;
+  } else if (currentDrug === 'dhappq') {
+    txt += `<strong>DHA-PPQ</strong> pairs the fastest-clearing artemisinin derivative (t½ ~1h) with piperaquine's ultra-long half-life (t½ ~28d). This creates the longest partner drug "tail" of any ACT, sustaining parasite killing for weeks post-treatment. However, piperaquine resistance (PfPM2K plasmepsins) has spread widely in Cambodia, collapsing DHA-PPQ efficacy. `;
+  } else if (currentDrug === 'al') {
+    txt += `<strong>AL</strong> remains the most widely used first-line ACT globally. Lumefantrine has a moderate half-life (~3 days) and excellent bioavailability with fat. `;
+  }
+
+  // K13 resistance
+  if (activeResist.has('k13')) {
+    const pct = para.PCT;
+    txt += `<strong>PfKelch13 partial resistance</strong> (validated Southeast Asia mutations: C580Y, Y493H, etc.) slows artemisinin-mediated ring-stage killing by ~65%. Parasites survive the artemisinin window in a dormant ring state, extending PCT from ~2d to ${pct ? pct+'d' : '>7d'}. This is <em>partial</em> resistance — the partner drug firewall remains critical. `;
+  }
+
+  // Partner drug resistance
+  if (activeResist.has('pfcrt') || activeResist.has('pfmdr1') || activeResist.has('ppm2k')) {
+    if (para.d28outcome === 'FAILURE') {
+      txt += `<span class="warn">Treatment failure predicted.</span> Partner drug resistance has eliminated the second line of defence. With K13 partial resistance also present, the combination leaves a window of viable parasites that are neither cleared by artemisinin (ring dormancy) nor by the partner drug (efflux resistance). This is the mechanism of ACT treatment failure documented in the Mekong region. `;
+    } else {
+      txt += `Partner drug resistance is present but <span class="good">treatment success maintained</span> — possibly because the artemisinin kill rate is still sufficient, or because the partner drug resistance is incomplete. `;
+    }
+  }
+
+  // Adherence
+  if (adherence < 0.8) {
+    txt += `<span class="warn">Low adherence (${(adherence*100).toFixed(0)}%)</span> leaves the parasite exposed to sub-therapeutic drug concentrations during the elimination phase, strongly increasing recrudescence risk and selecting for resistance. The WHO recommends a 3-day ACT course precisely to minimise non-adherence. `;
+  }
+
+  if (txt === '') txt = 'Fully sensitive parasite under standard dosing — rapid clearance expected by day 3, no recrudescence predicted.';
+  document.getElementById('interpText').innerHTML = txt;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN UPDATE
+// ─────────────────────────────────────────────────────────────────────────────
+function update() {
+  const drug     = DRUGS[currentDrug];
+  const initDens = parseFloat(document.getElementById('initPara').value);
+  const adherence = parseFloat(document.getElementById('adherence').value);
+  const ak       = parseFloat(document.getElementById('arteKill').value);
+  const partk    = parseFloat(document.getElementById('partKill').value);
+
+  // Apply resistance modifiers on top of manual sliders
+  let arteKillMod = ak, partKillMod = partk;
+  activeResist.forEach(k => {
+    arteKillMod *= RESIST_MODS[k].arteKillMod;
+    partKillMod *= RESIST_MODS[k].partKillMod;
+  });
+  arteKillMod = Math.max(0.05, arteKillMod);
+  partKillMod = Math.max(0.0, partKillMod);
+
+  // Display
+  document.getElementById('paraVal').textContent    = (initDens/1000).toFixed(0)+'k';
+  document.getElementById('adhVal').textContent     = (adherence*100).toFixed(0)+'%';
+  document.getElementById('arteKillVal').textContent= ak.toFixed(2);
+  document.getElementById('partKillVal').textContent= partk.toFixed(2);
+
+  const pk     = calcPK(drug, adherence);
+  const para   = calcParasite(drug, pk, initDens, arteKillMod, partKillMod, adherence);
+  const ev     = calcResistEvolution();
+  const sweep  = calcFailureSweep(drug);
+
+  buildClearChart(para, pk);
+  buildPKChart(pk);
+  buildPDChart(para);
+  buildResistChart(ev);
+  buildFailChart(sweep);
+  updateMetrics(para, ev);
+  updateInterpretation(para, pk);
+
+  document.getElementById('clearFoot').textContent =
+    `PCT: ${para.PCT ? para.PCT+'d' : '>28d'} · Nadir: ${para.nadirP.toFixed(3)}/µL at day ${para.nadirDay} · Day-28: ${para.d28outcome}`;
+  document.getElementById('pkFoot').textContent =
+    `Artemisinin t½: ${(drug.arteHL*24).toFixed(1)}h · ${drug.partHL ? 'Partner t½: '+(drug.partHL*24).toFixed(0)+'h' : 'No partner drug'}`;
+  document.getElementById('resistFoot').textContent =
+    `Active mutations (★): ${activeResist.size > 0 ? [...activeResist].join(', ') : 'none'} · Selection pressure increases allele frequency under 50% population ACT coverage.`;
+}
+
+function onSlider() { update(); }
+
+function selectDrug(d) {
+  currentDrug = d;
+  ['al','asaq','dhappq','mono'].forEach(k =>
+    document.getElementById('btn-'+k).classList.toggle('active', k===d));
+  update();
+}
+
+function toggleResist(r) {
+  activeResist.has(r) ? activeResist.delete(r) : activeResist.add(r);
+  document.getElementById('rbtn-'+r).classList.toggle('on', activeResist.has(r));
+  update();
+}
+
+// Init
+update();
+</script>
+</body>
+</html>

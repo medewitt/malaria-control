@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vector Environment Lab — Larval Source Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f3f0e9;
+    --surface2: #CFD2D3;
+    --border: rgba(140,109,44,0.25);
+    --accent: #8C6D2C;
+    --accent2: #624d17;
+    --accent3: #002B49;
+    --accent4: #F0C300;
+    --text: #000000;
+    --text-dim: #54565A;
+    --text-bright: #000000;
+    --red: #E5353C;
+    --blue: #004A98;
+    --green: #00BC70;
+    --yellow: #F0C300;
+    --purple: #002B49;
+    --orange: #FF7F31;
+    /* mapped aliases for legacy references */
+    --deep: var(--bg);
+    --deep2: #ffffff;
+    --mid: var(--surface);
+    --border2: var(--border);
+    --water2: var(--accent);
+    --water3: var(--accent);
+    --text2: var(--text-dim);
+    --text3: var(--text-dim);
+    --larva: var(--green);
+    --larva2: #00BC70;
+    --adult: var(--orange);
+    --adult2: #FF7F31;
+    --danger: var(--red);
+  }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito Sans', Arial, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+
+.wrap {
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px 60px;
+}
+
+/* ── HEADER ─────────────────────────────────────────────────── */
+.header {
+  padding: 40px 0 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: end;
+}
+
+.header-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--water2);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--water2);
+}
+
+h1 {
+  font-family: Garamond, serif;
+  font-size: clamp(24px, 4.5vw, 42px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+h1 .italic { font-style: italic; color: var(--water3); }
+
+.header-desc {
+  font-size: 15px;
+  color: var(--text2);
+  margin-top: 8px;
+  font-style: italic;
+  line-height: 1.5;
+  max-width: 560px;
+}
+
+.status-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 18px;
+  min-width: 180px;
+  flex-shrink: 0;
+}
+
+.status-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.status-key { color: var(--text3); }
+.status-val { color: var(--water3); font-weight: 500; }
+
+/* ── LAYOUT ─────────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 700px) { .layout { grid-template-columns: 1fr; } }
+
+/* ── CONTROLS ────────────────────────────────────────────────── */
+.controls-col {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.control-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.card-header {
+  background: var(--mid);
+  border-bottom: 1px solid var(--border);
+  padding: 7px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--water2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-header .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-body { padding: 14px 16px; }
+
+/* Sliders */
+.slider-group { margin-bottom: 16px; }
+.slider-group:last-child { margin-bottom: 0; }
+
+.slider-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 3px;
+}
+
+.slider-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--water3);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 1px 7px;
+  min-width: 52px;
+  text-align: right;
+}
+
+.slider-sub {
+  font-size: 11px;
+  color: var(--text3);
+  font-style: italic;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--border2);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"].rain { background: linear-gradient(to right, var(--deep2), var(--water2)); }
+input[type="range"].lsm  { background: linear-gradient(to right, var(--larva), #1a5c3a); }
+input[type="range"].irs  { background: linear-gradient(to right, var(--adult2), var(--danger)); }
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 2px solid var(--deep);
+  box-shadow: 0 0 6px rgba(90,184,232,0.4);
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 10px rgba(90,184,232,0.7);
+}
+
+/* ── METRICS GRID ────────────────────────────────────────────── */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.metric {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+}
+
+.metric-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--water3);
+}
+
+.metric-value.green  { color: var(--larva2); }
+.metric-value.amber  { color: var(--adult2); }
+.metric-value.red    { color: var(--danger); }
+
+.metric-sub {
+  font-size: 10px;
+  color: var(--text3);
+  font-style: italic;
+  margin-top: 3px;
+}
+
+/* ── EQUATIONS ───────────────────────────────────────────────── */
+.eq-block {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  line-height: 2.1;
+  color: var(--text3);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 12px 14px;
+}
+
+.eq-line { color: var(--water3); }
+.eq-comment { color: var(--text3); font-size: 8.5px; }
+
+/* ── CHARTS ──────────────────────────────────────────────────── */
+.charts-col { display: flex; flex-direction: column; gap: 20px; }
+
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.chart-card-header {
+  padding: 12px 18px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.chart-card-title {
+  font-family: Garamond, serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--text);
+}
+
+.chart-card-fig {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+
+.chart-wrap {
+  padding: 12px 16px;
+  height: 240px;
+  position: relative;
+}
+
+.chart-footer {
+  padding: 8px 18px 12px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  line-height: 1.5;
+}
+
+/* ── REGIME PANEL ────────────────────────────────────────────── */
+.regime-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.regime-header {
+  padding: 7px 14px;
+  background: var(--mid);
+  border-bottom: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--water2);
+}
+
+.regime-body {
+  padding: 14px 16px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text2);
+}
+
+.regime-body strong { color: var(--text); font-weight: 600; }
+.regime-body em { color: var(--water3); font-style: italic; }
+
+/* ── WATERFALL / STACKED BAR VIZ ─────────────────────────────── */
+#mortCanvas {
+  display: block;
+  width: 100%;
+  height: 60px;
+}
+
+/* ── ANIMATIONS ──────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chart-card { animation: fadeIn 0.35s ease both; }
+.chart-card:nth-child(2) { animation-delay: 0.08s; }
+.chart-card:nth-child(3) { animation-delay: 0.16s; }
+
+/* Pulsing dot */
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50%      { opacity: 0.3; }
+}
+.live-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--larva2);
+  animation: pulse 2s ease-in-out infinite;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="header-eyebrow">Environmental Entomology · LSM Simulator</div>
+      <h1>Vector Dynamics &amp;<br><span class="italic">Larval Source Management</span></h1>
+      <div class="header-desc">
+        A two-stage ODE model of <em>Anopheles</em> larval and adult population dynamics under density-dependent regulation, rainfall-driven carrying capacity, and targeted vector control.
+      </div>
+    </div>
+    <div class="status-panel">
+      <div class="status-title">Model Parameters</div>
+      <div class="status-row"><span class="status-key">θ (oviposition)</span><span class="status-val">5.0 /d</span></div>
+      <div class="status-row"><span class="status-key">ν (maturation)</span><span class="status-val">0.20 /d</span></div>
+      <div class="status-row"><span class="status-key">μ_L₀ (baseline)</span><span class="status-val">0.10 /d</span></div>
+      <div class="status-row"><span class="status-key">μ_M₀ (baseline)</span><span class="status-val">0.10 /d</span></div>
+      <div class="status-row"><span class="status-key">dt / steps</span><span class="status-val">0.5 / 150</span></div>
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <!-- LEFT CONTROLS -->
+    <div class="controls-col">
+
+      <!-- RAINFALL -->
+      <div class="control-card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--water2)"></div>
+          Environmental Driver
+        </div>
+        <div class="card-body">
+          <div class="slider-group">
+            <div class="slider-top">
+              <span class="slider-label">Rainfall / Carrying Capacity</span>
+              <span class="slider-val" id="kVal">1000</span>
+            </div>
+            <div class="slider-sub">Sets maximum larval density K. High rainfall = more breeding sites.</div>
+            <input type="range" class="rain" id="carryingCapacity" min="100" max="3000" step="50" value="1000">
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERVENTIONS -->
+      <div class="control-card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--larva)"></div>
+          Larval Stage Interventions
+        </div>
+        <div class="card-body">
+          <div class="slider-group">
+            <div class="slider-top">
+              <span class="slider-label">LSM Larval Mortality</span>
+              <span class="slider-val" id="lsmVal">0.05</span>
+            </div>
+            <div class="slider-sub">Added mortality from larviciding, drainage, or habitat modification.</div>
+            <input type="range" class="lsm" id="lsmMortality" min="0" max="0.5" step="0.01" value="0.05">
+          </div>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--adult)"></div>
+          Adult Stage Interventions
+        </div>
+        <div class="card-body">
+          <div class="slider-group">
+            <div class="slider-top">
+              <span class="slider-label">LLIN / IRS Adult Mortality</span>
+              <span class="slider-val" id="irsVal">0.10</span>
+            </div>
+            <div class="slider-sub">Added adult mortality from insecticide-treated nets or indoor spraying.</div>
+            <input type="range" class="irs" id="irsMortality" min="0" max="0.5" step="0.01" value="0.10">
+          </div>
+        </div>
+      </div>
+
+      <!-- METRICS -->
+      <div class="control-card">
+        <div class="card-header">
+          <div class="live-dot"></div>
+          Equilibrium Metrics
+        </div>
+        <div class="card-body">
+          <div class="metrics-grid">
+            <div class="metric">
+              <div class="metric-label">Adult M*</div>
+              <div class="metric-value" id="mEqM">—</div>
+              <div class="metric-sub">equilibrium</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Larval L*</div>
+              <div class="metric-value" id="mEqL">—</div>
+              <div class="metric-sub">equilibrium</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">M / M₀</div>
+              <div class="metric-value" id="mReduction">—</div>
+              <div class="metric-sub">vs. no control</div>
+            </div>
+            <div class="metric">
+              <div class="metric-label">Regime</div>
+              <div class="metric-value" id="mRegime" style="font-size:13px">—</div>
+              <div class="metric-sub">population state</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MORTALITY BUDGET BAR -->
+      <div class="control-card">
+        <div class="card-header">
+          <div class="dot" style="background:var(--text3)"></div>
+          Mortality Budget
+        </div>
+        <div class="card-body" style="padding-bottom:8px">
+          <canvas id="mortCanvas"></canvas>
+          <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text3);display:flex;align-items:center;gap:4px">
+              <span style="width:10px;height:10px;background:var(--text3);display:inline-block"></span>Baseline
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--larva);display:flex;align-items:center;gap:4px">
+              <span style="width:10px;height:10px;background:var(--larva);display:inline-block"></span>LSM
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--adult);display:flex;align-items:center;gap:4px">
+              <span style="width:10px;height:10px;background:var(--adult);display:inline-block"></span>Adult ctrl
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EQUATIONS -->
+      <div class="eq-block">
+        <div class="eq-line">dL/dt = θM(1−L/K)</div>
+        <div class="eq-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;− (μ_L + d_L + ν)L</div>
+        <div class="eq-line">dM/dt = νL − (μ_M + d_M)M</div>
+        <div style="margin-top:4px" class="eq-comment">d_L = LSM mortality</div>
+        <div class="eq-comment">d_M = LLIN/IRS mortality</div>
+        <div class="eq-comment">ν   = maturation rate</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT CHARTS -->
+    <div class="charts-col">
+
+      <!-- CHART 1: Main dynamics -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-card-title">Population Dynamics</div>
+          <div class="chart-card-fig">Fig. I</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="mainChart"></canvas>
+        </div>
+        <div class="chart-footer" id="mainFooter">
+          Larval (L) and adult (M) mosquito trajectories from initial conditions L₀=100, M₀=50.
+        </div>
+      </div>
+
+      <!-- CHART 2: Phase portrait L vs M -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-card-title">Phase Portrait — L vs M</div>
+          <div class="chart-card-fig">Fig. II</div>
+        </div>
+        <canvas id="phaseCanvas" style="display:block;width:100%;height:220px;"></canvas>
+        <div class="chart-footer">
+          State-space trajectory. ● start &nbsp;■ end. Colour encodes time: cyan (early) → deep blue (late).
+        </div>
+      </div>
+
+      <!-- CHART 3: Intervention comparison bar -->
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div class="chart-card-title">Intervention Impact — Adult Equilibrium</div>
+          <div class="chart-card-fig">Fig. III</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="compChart"></canvas>
+        </div>
+        <div class="chart-footer">
+          Estimated equilibrium adult mosquito density across four intervention scenarios at the current K.
+        </div>
+      </div>
+
+      <!-- REGIME INTERPRETATION -->
+      <div class="regime-panel">
+        <div class="regime-header">Dynamic Regime Analysis</div>
+        <div class="regime-body" id="regimeText">
+          Adjust sliders to observe how larval source management and adult vector control interact with rainfall-driven carrying capacity.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// SIMULATION
+// ─────────────────────────────────────────────────────────────
+
+const THETA = 5.0;   // oviposition rate
+const MU_L  = 0.1;   // baseline larval mortality
+const MU_M  = 0.1;   // baseline adult mortality
+const NU    = 0.2;   // larval maturation rate
+const DT    = 0.5;
+const STEPS = 150;
+
+function simulate(K, d_L, d_M, L0 = 100, M0 = 50) {
+  let L = L0, M = M0;
+  const hist = { L: [], M: [], t: [] };
+  for (let s = 0; s < STEPS; s++) {
+    hist.t.push(s * DT);
+    hist.L.push(L);
+    hist.M.push(M);
+    const dL = THETA * M * (1 - L / K) - (MU_L + d_L + NU) * L;
+    const dM = NU * L - (MU_M + d_M) * M;
+    L = Math.max(0, L + dL * DT);
+    M = Math.max(0, M + dM * DT);
+  }
+  return hist;
+}
+
+// Analytical equilibrium (if it exists)
+// At equilibrium: dL/dt=0, dM/dt=0
+// From dM=0: L* = (μM+dM)/ν * M*
+// From dL=0: θM*(1 - L*/K) = (μL+dL+ν)*L*
+// Substituting: θM*(1 - (μM+dM)M*/(ν·K)) = (μL+dL+ν)*(μM+dM)/ν * M*
+// M*>0: θ(1 - (μM+dM)M*/(νK)) = (μL+dL+ν)(μM+dM)/ν
+// Let A = (μL+dL+ν)(μM+dM)/ν, B = θ(μM+dM)/(νK)
+// θ - B·M* = A  →  M* = (θ-A)/B
+function analyticalEquilibrium(K, d_L, d_M) {
+  const A = (MU_L + d_L + NU) * (MU_M + d_M) / NU;
+  const B = THETA * (MU_M + d_M) / (NU * K);
+  const Mstar = (THETA - A) / B;
+  if (Mstar <= 0) return { L: 0, M: 0, exists: false };
+  const Lstar = (MU_M + d_M) / NU * Mstar;
+  return { L: Math.max(0, Lstar), M: Math.max(0, Mstar), exists: true };
+}
+
+// ─────────────────────────────────────────────────────────────
+// CHART INSTANCES
+// ─────────────────────────────────────────────────────────────
+
+let mainChartInst, compChartInst;
+
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size   = 10;
+Chart.defaults.color       = '#54565A';
+
+const GRID  = 'rgba(140,109,44,0.15)';
+const TICK  = '#54565A';
+
+function buildMainChart(hist) {
+  const labels = hist.t.map(t => t.toFixed(0));
+  if (mainChartInst) mainChartInst.destroy();
+  mainChartInst = new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Larvae (L)',
+          data: hist.L,
+          borderColor: '#3db88a',
+          backgroundColor: 'rgba(61,184,138,0.08)',
+          fill: true, borderWidth: 2, pointRadius: 0, tension: 0.3,
+          yAxisID: 'yL',
+        },
+        {
+          label: 'Adults (M)',
+          data: hist.M,
+          borderColor: '#e8a030',
+          backgroundColor: 'rgba(232,160,48,0.08)',
+          fill: true, borderWidth: 2.5, pointRadius: 0, tension: 0.3,
+          yAxisID: 'yM',
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: {
+            font: { family: "'Nunito Sans', sans-serif", size: 12 },
+            color: '#54565A', usePointStyle: true,
+          },
+        },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(140,109,44,0.25)',
+          borderWidth: 1,
+          titleColor: '#000000',
+          bodyColor: '#54565A',
+          padding: 10,
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Time (days)', color: TICK },
+          grid: { color: GRID }, border: { color: 'rgba(140,109,44,0.25)' },
+          ticks: { maxTicksLimit: 8, color: TICK },
+        },
+        yL: {
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'Larvae', color: '#3db88a' },
+          grid: { color: GRID }, border: { color: 'rgba(140,109,44,0.25)' },
+          ticks: { color: '#3db88a' },
+          min: 0,
+        },
+        yM: {
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'Adults', color: '#e8a030' },
+          grid: { drawOnChartArea: false }, border: { color: 'rgba(140,109,44,0.25)' },
+          ticks: { color: '#e8a030' },
+          min: 0,
+        },
+      },
+    },
+  });
+}
+
+function buildCompChart(K, d_L_cur, d_M_cur) {
+  // Four canonical scenarios
+  const scenarios = [
+    { label: 'No control',     d_L: 0,       d_M: 0 },
+    { label: 'LSM only',       d_L: d_L_cur, d_M: 0 },
+    { label: 'LLIN/IRS only',  d_L: 0,       d_M: d_M_cur },
+    { label: 'Combined',       d_L: d_L_cur, d_M: d_M_cur },
+  ];
+
+  const values = scenarios.map(s => {
+    const eq = analyticalEquilibrium(K, s.d_L, s.d_M);
+    return eq.exists ? Math.round(eq.M) : 0;
+  });
+
+  const maxVal = Math.max(...values, 1);
+  const colors = values.map(v => {
+    const frac = v / maxVal;
+    if (frac > 0.8) return 'rgba(224,80,80,0.7)';
+    if (frac > 0.4) return 'rgba(232,160,48,0.7)';
+    return 'rgba(61,184,138,0.7)';
+  });
+
+  if (compChartInst) compChartInst.destroy();
+  compChartInst = new Chart(document.getElementById('compChart'), {
+    type: 'bar',
+    data: {
+      labels: scenarios.map(s => s.label),
+      datasets: [{
+        label: 'Adult M* (equilibrium)',
+        data: values,
+        backgroundColor: colors,
+        borderColor: colors.map(c => c.replace('0.7', '1')),
+        borderWidth: 1,
+        borderRadius: 2,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: 'rgba(140,109,44,0.25)',
+          borderWidth: 1,
+          titleColor: '#000000',
+          bodyColor: '#54565A',
+          padding: 10,
+          callbacks: { label: ctx => ` M* = ${ctx.parsed.y} adults` },
+        },
+      },
+      scales: {
+        x: { grid: { color: GRID }, border: { color: 'rgba(140,109,44,0.25)' }, ticks: { color: TICK } },
+        y: {
+          title: { display: true, text: 'Equilibrium adults M*', color: TICK },
+          grid: { color: GRID }, border: { color: 'rgba(140,109,44,0.25)' },
+          ticks: { color: TICK }, min: 0,
+        },
+      },
+    },
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// PHASE PORTRAIT
+// ─────────────────────────────────────────────────────────────
+
+function drawPhase(hist) {
+  const canvas = document.getElementById('phaseCanvas');
+  const ctx    = canvas.getContext('2d');
+  const DPR    = window.devicePixelRatio || 1;
+  const W      = canvas.offsetWidth;
+  const H      = canvas.offsetHeight || 220;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  ctx.scale(DPR, DPR);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  const PAD = { t: 16, r: 16, b: 34, l: 48 };
+  const cW = W - PAD.l - PAD.r;
+  const cH = H - PAD.t - PAD.b;
+
+  const maxL = Math.max(...hist.L, 1);
+  const maxM = Math.max(...hist.M, 1);
+  const n    = hist.L.length;
+
+  const px = l => PAD.l + (l / maxL) * cW;
+  const py = m => PAD.t + cH - (m / maxM) * cH;
+
+  // Grid
+  ctx.strokeStyle = 'rgba(140,109,44,0.15)';
+  ctx.lineWidth = 0.5;
+  [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+    const x = px(maxL * f), y = py(maxM * f);
+    ctx.beginPath(); ctx.moveTo(x, PAD.t);      ctx.lineTo(x, PAD.t + cH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD.l, y);       ctx.lineTo(PAD.l + cW, y); ctx.stroke();
+  });
+
+  // Trajectory — cyan (early) to deep blue (late)
+  for (let i = 1; i < n; i++) {
+    const frac = i / n;
+    const r = Math.round(10  + frac * 15);
+    const g = Math.round(160 - frac * 100);
+    const b = Math.round(230 - frac * 90);
+    ctx.strokeStyle = `rgb(${r},${g},${b})`;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(px(hist.L[i-1]), py(hist.M[i-1]));
+    ctx.lineTo(px(hist.L[i]),   py(hist.M[i]));
+    ctx.stroke();
+  }
+
+  // Start marker (circle)
+  ctx.fillStyle = '#00BC70';
+  ctx.beginPath();
+  ctx.arc(px(hist.L[0]), py(hist.M[0]), 5, 0, Math.PI*2);
+  ctx.fill();
+
+  // End marker (square)
+  const ex = px(hist.L[n-1]), ey = py(hist.M[n-1]);
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(ex - 4, ey - 4, 8, 8);
+
+  // Axes
+  ctx.strokeStyle = 'rgba(140,109,44,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD.l, PAD.t); ctx.lineTo(PAD.l, PAD.t + cH);
+  ctx.lineTo(PAD.l + cW, PAD.t + cH);
+  ctx.stroke();
+
+  // Labels
+  ctx.fillStyle = '#54565A';
+  ctx.font = `9px JetBrains Mono, monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('Larvae (L)', PAD.l + cW/2, H - 6);
+  ctx.save();
+  ctx.translate(12, PAD.t + cH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.fillText('Adults (M)', 0, 0);
+  ctx.restore();
+
+  ctx.textAlign = 'right';
+  ctx.font = '8px JetBrains Mono, monospace';
+  [0, 0.5, 1].forEach(f => {
+    ctx.fillText((maxM * f).toFixed(0), PAD.l - 4, py(maxM * f) + 3);
+  });
+  ctx.textAlign = 'center';
+  [0, 0.5, 1].forEach(f => {
+    ctx.fillText((maxL * f).toFixed(0), px(maxL * f), PAD.t + cH + 14);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// MORTALITY BUDGET BAR
+// ─────────────────────────────────────────────────────────────
+
+function drawMortBudget(d_L, d_M) {
+  const canvas = document.getElementById('mortCanvas');
+  const ctx    = canvas.getContext('2d');
+  const DPR    = window.devicePixelRatio || 1;
+  const W      = canvas.offsetWidth;
+  const H      = canvas.offsetHeight || 60;
+  canvas.width  = W * DPR;
+  canvas.height = H * DPR;
+  ctx.scale(DPR, DPR);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+
+  const larva_total = MU_L + d_L + NU;
+  const adult_total = MU_M + d_M;
+  const grand_max   = Math.max(larva_total, adult_total, 0.5);
+
+  function drawBar(y, h, baseline, lsm, label, c1, c2) {
+    const total = baseline + lsm;
+    const scale = (W - 80) / grand_max;
+    const bW = baseline * scale;
+    const lW = lsm * scale;
+
+    ctx.fillStyle = 'rgba(140,109,44,0.25)';
+    ctx.fillRect(60, y, W - 80, h);
+
+    ctx.fillStyle = c1;
+    ctx.fillRect(60, y, bW, h);
+
+    ctx.fillStyle = c2;
+    ctx.fillRect(60 + bW, y, lW, h);
+
+    ctx.fillStyle = '#54565A';
+    ctx.font = '9px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(label, 54, y + h/2 + 3);
+
+    ctx.fillStyle = '#54565A';
+    ctx.textAlign = 'left';
+    ctx.fillText(total.toFixed(3) + ' /d', 60 + bW + lW + 5, y + h/2 + 3);
+  }
+
+  drawBar(8,  18, MU_L + NU, d_L, 'Larval', '#54565A', '#3db88a');
+  drawBar(34, 18, MU_M,      d_M, 'Adult',  '#54565A', '#e8a030');
+}
+
+// ─────────────────────────────────────────────────────────────
+// METRICS + INTERPRETATION
+// ─────────────────────────────────────────────────────────────
+
+let baselineM = null;
+
+function updateMetrics(K, d_L, d_M) {
+  const eq = analyticalEquilibrium(K, d_L, d_M);
+  const eqBase = analyticalEquilibrium(K, 0, 0);
+  if (baselineM === null) baselineM = eqBase.M;
+
+  const Meq = eq.exists ? Math.round(eq.M) : 0;
+  const Leq = eq.exists ? Math.round(eq.L) : 0;
+
+  const mEl = document.getElementById('mEqM');
+  mEl.textContent = Meq;
+  mEl.className   = 'metric-value ' + (Meq > eqBase.M * 0.7 ? 'red' : Meq > eqBase.M * 0.3 ? 'amber' : 'green');
+
+  document.getElementById('mEqL').textContent = Leq;
+
+  const reduction = eqBase.exists ? ((1 - Meq / eqBase.M) * 100).toFixed(0) + '%' : '—';
+  const redEl = document.getElementById('mReduction');
+  redEl.textContent = reduction;
+  const redNum = eqBase.exists ? (1 - Meq / eqBase.M) : 0;
+  redEl.className = 'metric-value ' + (redNum > 0.7 ? 'green' : redNum > 0.3 ? 'amber' : 'red');
+
+  const regEl = document.getElementById('mRegime');
+  if (!eq.exists || Meq < 2) {
+    regEl.textContent = 'EXTINCT';
+    regEl.className   = 'metric-value green';
+  } else if (redNum > 0.7) {
+    regEl.textContent = 'SUPPR.';
+    regEl.className   = 'metric-value green';
+  } else if (redNum > 0.3) {
+    regEl.textContent = 'PARTIAL';
+    regEl.className   = 'metric-value amber';
+  } else {
+    regEl.textContent = 'PERSIST';
+    regEl.className   = 'metric-value red';
+  }
+}
+
+function updateRegimeText(K, d_L, d_M, hist) {
+  const eq    = analyticalEquilibrium(K, d_L, d_M);
+  const eqBase = analyticalEquilibrium(K, 0, 0);
+  const n     = hist.M.length;
+  const Mfinal = hist.M[n - 1];
+
+  const A = (MU_L + d_L + NU) * (MU_M + d_M) / NU;
+  const threshold_K = A / THETA * (MU_M + d_M) / NU;
+
+  let txt = '';
+
+  if (!eq.exists || Mfinal < 2) {
+    txt = `<strong>Population extinction.</strong> Combined mortality exceeds the reproductive threshold. The system is below the critical carrying capacity K* ≈ ${threshold_K.toFixed(0)}. Even without intervention, this parameterisation drives the vector to local extinction. Increasing K (rainfall) or reducing d_L and d_M would restore a positive equilibrium.`;
+  } else {
+    const redPct = eqBase.exists ? ((1 - eq.M / eqBase.M) * 100).toFixed(0) : 0;
+
+    if (d_L > 0 && d_M > 0) {
+      txt = `<strong>Combined LSM + adult control</strong> reduces equilibrium adult density by <em>${redPct}%</em> relative to no-intervention baseline (M* = ${Math.round(eqBase.M)}). `;
+      txt += d_L > d_M
+        ? `Larval control (d_L=${d_L}) dominates the suppression — it acts upstream on both larval density and adult recruitment.`
+        : `Adult control (d_M=${d_M}) dominates. Note that adult-only control cannot prevent larval persistence; larvae will equilibrate at L* = ${Math.round(eq.L)}.`;
+    } else if (d_L > 0) {
+      txt = `<strong>Larval source management only.</strong> d_L = ${d_L} reduces larval survival and thereby limits adult recruitment. Equilibrium adult density is <em>${redPct}% lower</em> than baseline. LSM is particularly effective when K is large (high rainfall), because density-dependence alone is insufficient to self-limit populations.`;
+    } else if (d_M > 0) {
+      txt = `<strong>Adult vector control only (LLIN/IRS).</strong> d_M = ${d_M} directly reduces adult lifespan. Adult density falls by <em>${redPct}%</em> but larvae are unaffected upstream — larval density L* = ${Math.round(eq.L)} is largely unchanged. This illustrates why adult-only control can leave breeding sites intact.`;
+    } else {
+      txt = `<strong>No intervention.</strong> The population equilibrates at M* ≈ ${Math.round(eq.M)} adults and L* ≈ ${Math.round(eq.L)} larvae, governed by density-dependent larval regulation at K = ${K}. Increasing K (e.g., more rainfall) raises both equilibria proportionally.`;
+    }
+  }
+
+  document.getElementById('regimeText').innerHTML = txt;
+
+  document.getElementById('mainFooter').innerHTML =
+    eq.exists
+      ? `Equilibrium: L* ≈ ${Math.round(eq.L)}, M* ≈ ${Math.round(eq.M)}. Basic reproductive number R₀ ∝ θν / [(μ_L+d_L+ν)(μ_M+d_M)] = ${(THETA*NU / ((MU_L+d_L+NU)*(MU_M+d_M))).toFixed(2)}.`
+      : `System is below extinction threshold — no positive equilibrium exists. R₀ = ${(THETA*NU / ((MU_L+d_L+NU)*(MU_M+d_M))).toFixed(2)} < 1.`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// MAIN UPDATE
+// ─────────────────────────────────────────────────────────────
+
+function updateAll() {
+  const K   = parseFloat(document.getElementById('carryingCapacity').value);
+  const d_L = parseFloat(document.getElementById('lsmMortality').value);
+  const d_M = parseFloat(document.getElementById('irsMortality').value);
+
+  document.getElementById('kVal').textContent   = K;
+  document.getElementById('lsmVal').textContent = d_L.toFixed(2);
+  document.getElementById('irsVal').textContent = d_M.toFixed(2);
+
+  const hist = simulate(K, d_L, d_M);
+
+  buildMainChart(hist);
+  buildCompChart(K, d_L, d_M);
+  drawPhase(hist);
+  drawMortBudget(d_L, d_M);
+  updateMetrics(K, d_L, d_M);
+  updateRegimeText(K, d_L, d_M, hist);
+}
+
+// Events
+['carryingCapacity','lsmMortality','irsMortality'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateAll)
+);
+
+window.addEventListener('resize', () => {
+  if (window._rt) clearTimeout(window._rt);
+  window._rt = setTimeout(() => {
+    const K   = parseFloat(document.getElementById('carryingCapacity').value);
+    const d_L = parseFloat(document.getElementById('lsmMortality').value);
+    const d_M = parseFloat(document.getElementById('irsMortality').value);
+    const hist = simulate(K, d_L, d_M);
+    drawPhase(hist);
+    drawMortBudget(d_L, d_M);
+  }, 100);
+});
+
+updateAll();
+</script>
+</body>
+</html>

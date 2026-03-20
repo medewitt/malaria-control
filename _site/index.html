@@ -68,35 +68,6 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN") {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -130,6 +101,22 @@ window.Quarto = {
 <span class="menu-text">Simulation Lab</span></a>
   </li>  
   <li class="nav-item">
+    <a class="nav-link" href="./docs/vectors.html"> 
+<span class="menu-text">Vector Environment Lab</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./docs/pharmacokinetics.html"> 
+<span class="menu-text">Pharmacology Lab</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./docs/diagnostics.html"> 
+<span class="menu-text">Diagnostics Lab</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./docs/vaccine-design.html"> 
+<span class="menu-text">Vaccine Design Lab</span></a>
+  </li>  
+  <li class="nav-item">
     <a class="nav-link" href="./presentation/overview.html"> 
 <span class="menu-text">Lecture Presentation</span></a>
   </li>  
@@ -144,14 +131,8 @@ window.Quarto = {
 <div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
 <!-- sidebar -->
 <!-- margin-sidebar -->
-    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#lab-instructions" id="toc-lab-instructions" class="nav-link active" data-scroll-target="#lab-instructions">Lab Instructions</a></li>
-  </ul>
-</nav>
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -175,20 +156,96 @@ window.Quarto = {
 </header>
 
 
-<p>This lab allows you to explore different malaria control strategies given a fixed budget. Adjust the sliders to see the impact on malaria prevalence in children aged 2-10 (<span class="math inline">\(PfPR_{2-10}\)</span>) and the associated costs.</p>
-<section id="lab-instructions" class="level3">
-<h3 class="anchored" data-anchor-id="lab-instructions">Lab Instructions</h3>
-<ol type="1">
-<li><strong>Phase 1:</strong> Try to get <span class="math inline">\(PfPR\)</span> below 5% with <strong>unlimited</strong> budget.</li>
-<li><strong>Phase 2:</strong> Apply the $25,000 constraint.</li>
-<li><strong>Phase 3:</strong> Present your “Optimal Mix” to the class.</li>
-</ol>
-<blockquote class="blockquote">
-<p><strong>Note:</strong> If your budget bar turns red, your strategy is disqualified!</p>
-</blockquote>
+<p>This lab allows you to explore different malaria control strategies given a fixed budget.</p>
+<div class="row g-4 mt-3">
+<div class="col-md-4">
+<a href="docs/malaria-simulator.html" class="text-decoration-none">
+<div class="card module-card h-100">
+<div class="card-body">
+<div class="module-icon">
+🦟
+</div>
+<h5 class="card-title anchored">
+Disease Dynamics Simulator
+</h5>
+<p class="card-text text-muted">
+Run a compartmental malaria model. Adjust transmission, treatment, and vector control parameters to explore how interventions change disease dynamics.
+</p>
+</div>
+</div>
+</a><p><a href="docs/malaria-simulator.html" class="text-decoration-none"></a></p>
+</div>
+<div class="col-md-4">
+<a href="docs/vectors.html" class="text-decoration-none">
+<div class="card module-card h-100">
+<div class="card-body">
+<div class="module-icon">
+🌿
+</div>
+<h5 class="card-title anchored">
+Vector Environment Lab
+</h5>
+<p class="card-text text-muted">
+Manage larval breeding sites across a landscape. Allocate resources for larviciding and environmental management to reduce mosquito populations.
+</p>
+</div>
+</div>
+</a><p><a href="docs/vectors.html" class="text-decoration-none"></a></p>
+</div>
+<div class="col-md-4">
+<a href="docs/pharmacokinetics.html" class="text-decoration-none">
+<div class="card module-card h-100">
+<div class="card-body">
+<div class="module-icon">
+💊
+</div>
+<h5 class="card-title anchored">
+Pharmacology Lab
+</h5>
+<p class="card-text text-muted">
+Simulate ACT drug resistance and treatment failure. Explore how partner drug combinations and dosing regimens affect parasite clearance.
+</p>
+</div>
+</div>
+</a><p><a href="docs/pharmacokinetics.html" class="text-decoration-none"></a></p>
+</div>
+<div class="col-md-4">
+<a href="docs/diagnostics.html" class="text-decoration-none">
+<div class="card module-card h-100">
+<div class="card-body">
+<div class="module-icon">
+🔬
+</div>
+<h5 class="card-title anchored">
+Diagnostic Lab
+</h5>
+<p class="card-text text-muted">
+Compare malaria screening strategies. Allocate a budget across RDTs, microscopy, and PCR to optimize detection sensitivity and specificity.
+</p>
+</div>
+</div>
+</a><p><a href="docs/diagnostics.html" class="text-decoration-none"></a></p>
+</div>
+<div class="col-md-4">
+<a href="docs/vaccine-design.html" class="text-decoration-none">
+<div class="card module-card h-100">
+<div class="card-body">
+<div class="module-icon">
+🧬
+</div>
+<h5 class="card-title anchored">
+Vaccine Design Lab
+</h5>
+<p class="card-text text-muted">
+Design a malaria vaccine targeting different parasite life stages. Simulate within-host immune responses and evaluate efficacy trade-offs.
+</p>
+</div>
+</div>
+</a><p><a href="docs/vaccine-design.html" class="text-decoration-none"></a></p>
+</div>
+</div>
 
 
-</section>
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
